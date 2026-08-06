@@ -34,6 +34,7 @@ import com.svapravrithi.app.ui.screens.settings.AboutScreen
 import com.svapravrithi.app.ui.screens.settings.CategoriesScreen
 import com.svapravrithi.app.ui.screens.settings.CurrencySettingsScreen
 import com.svapravrithi.app.ui.screens.settings.HelpSupportScreen
+import com.svapravrithi.app.ui.screens.settings.MonthStartDaySettingsScreen
 import com.svapravrithi.app.ui.screens.settings.ScoringSettingsScreen
 import com.svapravrithi.app.ui.screens.splash.SplashScreen
 
@@ -47,6 +48,7 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val baseRoute = backStackEntry?.destination?.route?.substringBefore("?")?.substringBefore("/{")
     val showBottomBar = baseRoute in SCREENS_WITH_BOTTOM_NAV
+    val monthStartDay = com.svapravrithi.app.ui.theme.LocalMonthStartDay.current
 
     Scaffold(
         bottomBar = { if (showBottomBar) SvaBottomNavBar(navController) },
@@ -74,7 +76,7 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
             composable(Destination.Onboarding.route) {
                 OnboardingScreen(
                     onFinished = {
-                        val ym = DateUtil.currentYearMonth()
+                        val ym = DateUtil.currentCycleKey(monthStartDay)
                         navController.navigate(Destination.MonthlyDeclaration.build(ym)) {
                             popUpTo(Destination.Onboarding.route) { inclusive = true }
                         }
@@ -85,7 +87,7 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
                 route = Destination.MonthlyDeclaration.route,
                 arguments = listOf(navArgument("yearMonth") { type = NavType.StringType }),
             ) { backStack ->
-                val yearMonth = backStack.arguments?.getString("yearMonth") ?: DateUtil.currentYearMonth()
+                val yearMonth = backStack.arguments?.getString("yearMonth") ?: DateUtil.currentCycleKey(monthStartDay)
                 MonthlyDeclarationScreen(
                     yearMonth = yearMonth,
                     onSaved = {
@@ -100,7 +102,7 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
                 HomeScreen(
                     onAddExpense = { navController.navigate(Destination.AddExpense.build(null)) },
                     onEditExpense = { id -> navController.navigate(Destination.AddExpense.build(id)) },
-                    onOpenDeclaration = { navController.navigate(Destination.MonthlyDeclaration.build(DateUtil.currentYearMonth())) },
+                    onOpenDeclaration = { navController.navigate(Destination.MonthlyDeclaration.build(DateUtil.currentCycleKey(monthStartDay))) },
                     onOpenAnalytics = { navController.navigate(Destination.AnalyticsOverview.route) },
                     onOpenPlan = { navController.navigate(Destination.PlanList.route) },
                     onOpenProfile = { navController.navigate(Destination.Profile.route) },
@@ -147,7 +149,7 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
             composable(Destination.GunaAnalytics.route) {
                 GunaAnalyticsScreen(
                     onBack = { navController.popBackStack() },
-                    onDeclareGoals = { navController.navigate(Destination.MonthlyDeclaration.build(DateUtil.currentYearMonth())) },
+                    onDeclareGoals = { navController.navigate(Destination.MonthlyDeclaration.build(DateUtil.currentCycleKey(monthStartDay))) },
                 )
             }
             composable(Destination.SpendingAnalytics.route) { SpendingAnalyticsScreen(onBack = { navController.popBackStack() }) }
@@ -161,7 +163,7 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
             composable(Destination.Profile.route) {
                 ProfileScreen(
                     onBack = { navController.popBackStack() },
-                    onMonthlyDeclarations = { navController.navigate(Destination.MonthlyDeclaration.build(DateUtil.currentYearMonth())) },
+                    onMonthlyDeclarations = { navController.navigate(Destination.MonthlyDeclaration.build(DateUtil.currentCycleKey(monthStartDay))) },
                     onUpdateSavings = { navController.navigate(Destination.UpdateSavings.route) },
                     onCategories = { navController.navigate(Destination.Categories.route) },
                     onScoringSettings = { navController.navigate(Destination.ScoringSettings.route) },
@@ -169,6 +171,7 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
                     onHelpSupport = { navController.navigate(Destination.HelpSupport.route) },
                     onAbout = { navController.navigate(Destination.About.route) },
                     onCurrency = { navController.navigate(Destination.CurrencySettings.route) },
+                    onMonthStartDay = { navController.navigate(Destination.MonthStartDaySettings.route) },
                 )
             }
             composable(Destination.UpdateSavings.route) {
@@ -183,6 +186,7 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
             composable(Destination.HelpSupport.route) { HelpSupportScreen(onBack = { navController.popBackStack() }) }
             composable(Destination.About.route) { AboutScreen(onBack = { navController.popBackStack() }) }
             composable(Destination.CurrencySettings.route) { CurrencySettingsScreen(onBack = { navController.popBackStack() }) }
+            composable(Destination.MonthStartDaySettings.route) { MonthStartDaySettingsScreen(onBack = { navController.popBackStack() }) }
         }
     }
 }

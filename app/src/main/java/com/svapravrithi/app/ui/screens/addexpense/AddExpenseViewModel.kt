@@ -6,6 +6,7 @@ import com.svapravrithi.app.data.local.entity.ExpenseEntity
 import com.svapravrithi.app.data.repository.CategoryRepository
 import com.svapravrithi.app.data.repository.DEFAULT_CATEGORIES
 import com.svapravrithi.app.data.repository.ExpenseRepository
+import com.svapravrithi.app.data.repository.MonthCycleRepository
 import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.domain.model.ExpenseType
 import com.svapravrithi.app.domain.model.Guna
@@ -46,6 +47,7 @@ data class AddExpenseUiState(
 class AddExpenseViewModel @Inject constructor(
     private val repository: ExpenseRepository,
     private val categoryRepository: CategoryRepository,
+    private val monthCycleRepository: MonthCycleRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddExpenseUiState())
@@ -123,7 +125,7 @@ class AddExpenseViewModel @Inject constructor(
                     paymentMethod = state.paymentMethod,
                     comments = state.comments,
                     date = day,
-                    yearMonth = DateUtil.yearMonthOf(day),
+                    yearMonth = DateUtil.cycleKeyFor(day, monthCycleRepository.startDay.value),
                 ),
             )
             _uiState.value = AddExpenseUiState()

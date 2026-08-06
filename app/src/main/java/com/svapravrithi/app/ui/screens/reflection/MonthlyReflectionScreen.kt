@@ -30,11 +30,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.ui.components.GunaMandala
 import com.svapravrithi.app.ui.components.SvaCard
+import com.svapravrithi.app.ui.theme.LocalMonthStartDay
 import com.svapravrithi.app.ui.screens.analytics.AnalyticsViewModel
 
 @Composable
 fun MonthlyReflectionScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
+    val monthStartDay = LocalMonthStartDay.current
     val r = state.reflection
 
     Scaffold(
@@ -50,7 +52,7 @@ fun MonthlyReflectionScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = 
             modifier = Modifier.fillMaxSize().padding(padding).padding(20.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(DateUtil.monthLabel(state.yearMonth), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(DateUtil.cycleLabel(state.yearMonth, monthStartDay), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             SvaCard {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {

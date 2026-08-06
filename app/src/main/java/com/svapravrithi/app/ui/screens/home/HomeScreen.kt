@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.ui.theme.LocalCurrency
+import com.svapravrithi.app.ui.theme.LocalMonthStartDay
 import com.svapravrithi.app.ui.components.BudgetProgressBar
 import com.svapravrithi.app.ui.components.GunaMandala
 import com.svapravrithi.app.ui.components.SvaCard
@@ -54,6 +55,7 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val currency = LocalCurrency.current
+    val monthStartDay = LocalMonthStartDay.current
 
     Column(
         modifier = Modifier
@@ -100,7 +102,7 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        DateUtil.monthLabel(state.yearMonth),
+                        DateUtil.cycleLabel(state.yearMonth, monthStartDay),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -170,7 +172,10 @@ fun HomeScreen(
                     } else {
                         breakdown.recent.forEach { expense ->
                             Row(
-                                modifier = Modifier.fillMaxWidth().clickable { onEditExpense(expense.id) }   .padding(vertical = 6.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onEditExpense(expense.id) }
+                                    .padding(vertical = 6.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Column {

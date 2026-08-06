@@ -31,10 +31,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.ui.components.PrimaryButton
 import com.svapravrithi.app.ui.components.SvaCard
+import com.svapravrithi.app.ui.theme.LocalMonthStartDay
 
 @Composable
 fun UpdateSavingsScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: UpdateSavingsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
+    val monthStartDay = LocalMonthStartDay.current
     val currency = com.svapravrithi.app.ui.theme.LocalCurrency.current
 
     Scaffold(
@@ -54,7 +56,7 @@ fun UpdateSavingsScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: Upda
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(DateUtil.monthLabel(state.yearMonth), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(DateUtil.cycleLabel(state.yearMonth, monthStartDay), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 "Whenever you put money aside for savings or investment this month, update the total here. This is tracked separately from your expenses.",
                 style = MaterialTheme.typography.bodyMedium,

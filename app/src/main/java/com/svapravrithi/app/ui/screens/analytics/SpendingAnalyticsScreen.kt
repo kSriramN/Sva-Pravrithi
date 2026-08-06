@@ -36,10 +36,12 @@ import com.svapravrithi.app.ui.components.SvaCard
 import com.svapravrithi.app.ui.theme.Rajasik
 import com.svapravrithi.app.ui.theme.Satvik
 import com.svapravrithi.app.ui.theme.Tamasik
+import com.svapravrithi.app.ui.theme.LocalMonthStartDay
 
 @Composable
 fun SpendingAnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
+    val monthStartDay = LocalMonthStartDay.current
     val currency = LocalCurrency.current
     val f = state.financials
 
@@ -56,7 +58,7 @@ fun SpendingAnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = 
             modifier = Modifier.fillMaxSize().padding(padding).padding(20.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(DateUtil.monthLabel(state.yearMonth), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(DateUtil.cycleLabel(state.yearMonth, monthStartDay), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             val total = (f.actualNeeds + f.actualWants + f.actualPleasures).takeIf { it > 0 } ?: 1.0
             SvaCard {

@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.ui.components.SvaCard
+import com.svapravrithi.app.ui.theme.LocalMonthStartDay
 
 @Composable
 fun AnalyticsOverviewScreen(
@@ -40,6 +41,7 @@ fun AnalyticsOverviewScreen(
     viewModel: AnalyticsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val monthStartDay = LocalMonthStartDay.current
 
     Column(
         modifier = Modifier
@@ -49,7 +51,7 @@ fun AnalyticsOverviewScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text("Analytics", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
-        Text(DateUtil.monthLabel(state.yearMonth), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(DateUtil.cycleLabel(state.yearMonth, monthStartDay), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         SvaCard {
             Text("Reflection Score", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)

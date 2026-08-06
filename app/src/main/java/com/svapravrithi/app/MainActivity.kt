@@ -14,7 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.ui.navigation.SvaNavGraph
 import com.svapravrithi.app.ui.screens.settings.CurrencyViewModel
+import com.svapravrithi.app.ui.screens.settings.MonthCycleViewModel
 import com.svapravrithi.app.ui.theme.LocalCurrency
+import com.svapravrithi.app.ui.theme.LocalMonthStartDay
 import com.svapravrithi.app.ui.theme.SvaPravrithiTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -30,11 +32,18 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun SvaPravrithiRoot(currencyViewModel: CurrencyViewModel = hiltViewModel()) {
+private fun SvaPravrithiRoot(
+    currencyViewModel: CurrencyViewModel = hiltViewModel(),
+    monthCycleViewModel: MonthCycleViewModel = hiltViewModel(),
+) {
     val currency by currencyViewModel.currency.collectAsState()
+    val monthStartDay by monthCycleViewModel.startDay.collectAsState()
 
     SvaPravrithiTheme {
-        CompositionLocalProvider(LocalCurrency provides currency) {
+        CompositionLocalProvider(
+            LocalCurrency provides currency,
+            LocalMonthStartDay provides monthStartDay,
+        ) {
             Surface(modifier = Modifier.fillMaxSize()) {
                 SvaNavGraph()
             }

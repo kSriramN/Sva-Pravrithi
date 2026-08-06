@@ -3,6 +3,7 @@ package com.svapravrithi.app.ui.screens.savings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.svapravrithi.app.data.repository.DeclarationRepository
+import com.svapravrithi.app.data.repository.MonthCycleRepository
 import com.svapravrithi.app.domain.model.DateUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,9 +23,10 @@ data class UpdateSavingsUiState(
 @HiltViewModel
 class UpdateSavingsViewModel @Inject constructor(
     private val repository: DeclarationRepository,
+    monthCycleRepository: MonthCycleRepository,
 ) : ViewModel() {
 
-    private val yearMonth = DateUtil.currentYearMonth()
+    private val yearMonth = DateUtil.currentCycleKey(monthCycleRepository.startDay.value)
     private val _uiState = MutableStateFlow(UpdateSavingsUiState(yearMonth = yearMonth))
     val uiState: StateFlow<UpdateSavingsUiState> = _uiState.asStateFlow()
 

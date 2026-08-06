@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.svapravrithi.app.data.local.entity.ExpenseEntity
 import com.svapravrithi.app.data.repository.DeclarationRepository
 import com.svapravrithi.app.data.repository.ExpenseRepository
+import com.svapravrithi.app.data.repository.MonthCycleRepository
 import com.svapravrithi.app.data.repository.PlanRepository
 import com.svapravrithi.app.data.repository.ScoringConfigRepository
 import com.svapravrithi.app.domain.engine.DominantGunaEngine
@@ -52,9 +53,10 @@ class HomeViewModel @Inject constructor(
     planRepository: PlanRepository,
     declarationRepository: DeclarationRepository,
     scoringConfigRepository: ScoringConfigRepository,
+    monthCycleRepository: MonthCycleRepository,
 ) : ViewModel() {
 
-    private val _selectedYearMonth = MutableStateFlow(DateUtil.currentYearMonth())
+    private val _selectedYearMonth = MutableStateFlow(DateUtil.currentCycleKey(monthCycleRepository.startDay.value))
 
     val uiState: StateFlow<HomeUiState> = _selectedYearMonth.flatMapLatest { yearMonth ->
         combine(

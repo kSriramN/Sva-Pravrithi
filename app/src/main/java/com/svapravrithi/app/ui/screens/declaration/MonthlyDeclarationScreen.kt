@@ -34,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.ui.components.PrimaryButton
 import com.svapravrithi.app.ui.components.SvaCard
+import com.svapravrithi.app.ui.theme.LocalMonthStartDay
 
 @Composable
 fun MonthlyDeclarationScreen(
@@ -43,6 +44,7 @@ fun MonthlyDeclarationScreen(
     viewModel: MonthlyDeclarationViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val monthStartDay = LocalMonthStartDay.current
     val currency = com.svapravrithi.app.ui.theme.LocalCurrency.current
 
     LaunchedEffect(yearMonth) { viewModel.load(yearMonth) }
@@ -77,7 +79,7 @@ fun MonthlyDeclarationScreen(
                     Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous month")
                 }
                 Text(
-                    DateUtil.monthLabel(state.yearMonth),
+                    DateUtil.cycleLabel(state.yearMonth, monthStartDay),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

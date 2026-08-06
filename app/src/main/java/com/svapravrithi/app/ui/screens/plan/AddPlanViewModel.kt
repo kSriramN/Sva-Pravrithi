@@ -3,6 +3,7 @@ package com.svapravrithi.app.ui.screens.plan
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.svapravrithi.app.data.local.entity.PlanEntity
+import com.svapravrithi.app.data.repository.MonthCycleRepository
 import com.svapravrithi.app.data.repository.PlanRepository
 import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.domain.model.ExpenseType
@@ -37,6 +38,7 @@ data class AddPlanUiState(
 @HiltViewModel
 class AddPlanViewModel @Inject constructor(
     private val repository: PlanRepository,
+    private val monthCycleRepository: MonthCycleRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddPlanUiState())
@@ -89,7 +91,7 @@ class AddPlanViewModel @Inject constructor(
                     guna = state.guna ?: Guna.RAJASIK,
                     priority = state.priority,
                     notes = state.notes,
-                    yearMonth = DateUtil.yearMonthOf(state.dueDateMillis),
+                    yearMonth = DateUtil.cycleKeyFor(state.dueDateMillis, monthCycleRepository.startDay.value),
                 ),
             )
             _uiState.value = AddPlanUiState()

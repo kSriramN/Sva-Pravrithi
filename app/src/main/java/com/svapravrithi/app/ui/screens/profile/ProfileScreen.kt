@@ -43,7 +43,7 @@ import com.svapravrithi.app.ui.components.SvaCard
 
 private data class SettingsRow(val icon: ImageVector, val label: String, val action: ProfileAction)
 
-private enum class ProfileAction { MONTHLY_DECLARATIONS, UPDATE_SAVINGS, CATEGORIES, SCORING_SETTINGS, CURRENCY, BACKUP_RESTORE, HELP_SUPPORT, ABOUT }
+private enum class ProfileAction { MONTHLY_DECLARATIONS, UPDATE_SAVINGS, CATEGORIES, SCORING_SETTINGS, CURRENCY, MONTH_START_DAY, BACKUP_RESTORE, HELP_SUPPORT, ABOUT }
 
 private val settingsRows = listOf(
     SettingsRow(Icons.Filled.CalendarViewMonth, "Monthly Declarations", ProfileAction.MONTHLY_DECLARATIONS),
@@ -51,6 +51,7 @@ private val settingsRows = listOf(
     SettingsRow(Icons.Filled.Category, "Categories", ProfileAction.CATEGORIES),
     SettingsRow(Icons.Filled.Settings, "Scoring Settings", ProfileAction.SCORING_SETTINGS),
     SettingsRow(Icons.Filled.AttachMoney, "Currency", ProfileAction.CURRENCY),
+    SettingsRow(Icons.Filled.CalendarViewMonth, "Month Start Day", ProfileAction.MONTH_START_DAY),
     SettingsRow(Icons.Filled.Backup, "Backup & Restore", ProfileAction.BACKUP_RESTORE),
     SettingsRow(Icons.AutoMirrored.Filled.HelpOutline, "Help & Support", ProfileAction.HELP_SUPPORT),
     SettingsRow(Icons.Filled.Info, "About Sva-Pravrithi", ProfileAction.ABOUT),
@@ -67,6 +68,7 @@ fun ProfileScreen(
     onHelpSupport: () -> Unit,
     onAbout: () -> Unit,
     onCurrency: () -> Unit,
+    onMonthStartDay: () -> Unit,
 ) {
 
     Scaffold(
@@ -112,6 +114,7 @@ fun ProfileScreen(
                                     ProfileAction.CATEGORIES -> onCategories()
                                     ProfileAction.SCORING_SETTINGS -> onScoringSettings()
                                     ProfileAction.CURRENCY -> onCurrency()
+                                    ProfileAction.MONTH_START_DAY -> onMonthStartDay()
                                     ProfileAction.BACKUP_RESTORE -> onBackupRestore()
                                     ProfileAction.HELP_SUPPORT -> onHelpSupport()
                                     ProfileAction.ABOUT -> onAbout()
