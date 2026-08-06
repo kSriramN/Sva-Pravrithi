@@ -14,6 +14,7 @@ class ExpenseRepository @Inject constructor(private val dao: ExpenseDao) {
     fun observeAll(): Flow<List<ExpenseEntity>> = dao.observeAll()
     suspend fun save(expense: ExpenseEntity): Long = dao.upsert(expense)
     suspend fun update(expense: ExpenseEntity) = dao.update(expense)
+    suspend fun getById(id: Long): ExpenseEntity? = dao.getById(id)
     suspend fun delete(expense: ExpenseEntity) = dao.delete(expense)
     suspend fun getAllOnce(): List<ExpenseEntity> = dao.getAllOnce()
     suspend fun replaceAll(expenses: List<ExpenseEntity>) {

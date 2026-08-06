@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     onAddExpense: () -> Unit,
+    onEditExpense: (Long) -> Unit,
     onOpenDeclaration: () -> Unit,
     onOpenAnalytics: () -> Unit,
     onOpenPlan: () -> Unit,
@@ -169,7 +170,7 @@ fun HomeScreen(
                     } else {
                         breakdown.recent.forEach { expense ->
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                modifier = Modifier.fillMaxWidth().clickable { onEditExpense(expense.id) }.padding(vertical = 6.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Column {

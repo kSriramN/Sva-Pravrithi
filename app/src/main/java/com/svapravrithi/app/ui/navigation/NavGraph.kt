@@ -99,6 +99,7 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
             composable(Destination.Home.route) {
                 HomeScreen(
                     onAddExpense = { navController.navigate(Destination.AddExpense.build(null)) },
+                    onEditExpense = { id -> navController.navigate(Destination.AddExpense.build(id)) },
                     onOpenDeclaration = { navController.navigate(Destination.MonthlyDeclaration.build(DateUtil.currentYearMonth())) },
                     onOpenAnalytics = { navController.navigate(Destination.AnalyticsOverview.route) },
                     onOpenPlan = { navController.navigate(Destination.PlanList.route) },
@@ -108,8 +109,14 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
             composable(
                 route = Destination.AddExpense.route,
                 arguments = listOf(navArgument("expenseId") { type = NavType.LongType; defaultValue = -1L }),
-            ) {
-                AddExpenseScreen(onSaved = { navController.popBackStack() }, onBack = { navController.popBackStack() })
+            ) { backStack ->
+                val expenseId = backStack.arguments?.getLong("expenseId")?.takeIf { it >= 0 }
+                AddExpenseScreen(
+                    expenseId = expenseId,
+                    onSaved = { navController.popBackStack() },
+                    onDeleted = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
+                )
             }
             composable(Destination.PlanList.route) {
                 PlanListScreen(
