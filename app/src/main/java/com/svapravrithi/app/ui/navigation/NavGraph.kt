@@ -129,7 +129,12 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
                 arguments = listOf(navArgument("planId") { type = NavType.LongType; defaultValue = -1L }),
             ) { backStack ->
                 val planId = backStack.arguments?.getLong("planId")?.takeIf { it >= 0 }
-                AddPlanScreen(planId = planId, onSaved = { navController.popBackStack() }, onBack = { navController.popBackStack() })
+                AddPlanScreen(
+                    planId = planId,
+                    onSaved = { navController.popBackStack() },
+                    onDeleted = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
+                )
             }
             composable(Destination.AnalyticsOverview.route) {
                 AnalyticsOverviewScreen(

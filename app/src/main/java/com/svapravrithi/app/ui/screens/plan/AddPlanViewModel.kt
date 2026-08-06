@@ -16,6 +16,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AddPlanUiState(
+    /** 0 = new plan being created; non-zero = editing an existing one. */
+    val id: Long = 0L,
     val title: String = "",
     val estimatedAmount: String = "",
     val dueDateMillis: Long = System.currentTimeMillis(),
@@ -24,10 +26,12 @@ data class AddPlanUiState(
     val priority: PlanPriority = PlanPriority.MEDIUM,
     val notes: String = "",
     val isSaving: Boolean = false,
+    val isDeleting: Boolean = false,
     val error: String? = null,
 ) {
     val dueDateLabel: String get() = DateUtil.dayLabel(dueDateMillis)
     val isValid: Boolean get() = title.isNotBlank() && estimatedAmount.toDoubleOrNull() != null && estimatedAmount.toDoubleOrNull()!! > 0
+    val isEditing: Boolean get() = id != 0L
 }
 
 @HiltViewModel
@@ -38,14 +42,22 @@ class AddPlanViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AddPlanUiState())
     val uiState: StateFlow<AddPlanUiState> = _uiState.asStateFlow()
 
-    private var editingId: Long? = null
-
+    /** Call with an existing plan's id to switch this screen into edit mode. Pass null (or don't call) for a new plan. */
     fun load(planId: Long?) {
-        editingId = planId
-        if (planId == null) return
+        if (planId == null || planId == 0L) return
         viewModelScope.launch {
-            // For simplicity plans are loaded via the upcoming/completed flows in PlanListViewModel;
-            // this screen re-fetches directly if opened via deep link/edit.
+            repository.getById(planId)?.let { existing ->
+                _uiState.value = AddPlanUiState(
+                    id = existing.id,
+                    title = existing.title,
+                    estimatedAmount = existing.estimatedAmount.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() },
+                    dueDateMillis = existing.dueDate,
+                    type = existing.type,
+                    guna = existing.guna,
+                    priority = existing.priority,
+                    notes = existing.notes,
+                )
+            }
         }
     }
 
@@ -67,7 +79,9 @@ class AddPlanViewModel @Inject constructor(
             _uiState.value = state.copy(isSaving = true)
             repository.save(
                 PlanEntity(
-                    id = editingId ?: 0,
+                    // Passing the existing id (Room's REPLACE conflict strategy) updates the
+                    // row in place when editing; id=0 lets Room autogenerate a new one.
+                    id = state.id,
                     title = state.title,
                     estimatedAmount = state.estimatedAmount.toDouble(),
                     dueDate = state.dueDateMillis,
@@ -78,6 +92,17 @@ class AddPlanViewModel @Inject constructor(
                     yearMonth = DateUtil.yearMonthOf(state.dueDateMillis),
                 ),
             )
+            _uiState.value = AddPlanUiState()
+            onDone()
+        }
+    }
+
+    fun delete(onDone: () -> Unit) {
+        val state = _uiState.value
+        if (!state.isEditing) return
+        viewModelScope.launch {
+            _uiState.value = state.copy(isDeleting = true)
+            repository.getById(state.id)?.let { repository.delete(it) }
             _uiState.value = AddPlanUiState()
             onDone()
         }

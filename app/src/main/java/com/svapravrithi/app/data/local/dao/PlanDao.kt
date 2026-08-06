@@ -29,6 +29,9 @@ interface PlanDao {
     @Query("SELECT * FROM plans WHERE yearMonth = :yearMonth")
     fun observeForMonth(yearMonth: String): Flow<List<PlanEntity>>
 
+    @Query("SELECT * FROM plans WHERE id = :id")
+    suspend fun getById(id: Long): PlanEntity?
+
     @Query("SELECT * FROM plans")
     suspend fun getAllOnce(): List<PlanEntity>
 

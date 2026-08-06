@@ -11,6 +11,7 @@ class PlanRepository @Inject constructor(private val dao: PlanDao) {
     fun observeUpcoming(): Flow<List<PlanEntity>> = dao.observeUpcoming()
     fun observeCompleted(): Flow<List<PlanEntity>> = dao.observeCompleted()
     fun observeForMonth(yearMonth: String): Flow<List<PlanEntity>> = dao.observeForMonth(yearMonth)
+    suspend fun getById(id: Long): PlanEntity? = dao.getById(id)
     suspend fun save(plan: PlanEntity): Long = dao.upsert(plan)
     suspend fun update(plan: PlanEntity) = dao.update(plan)
     suspend fun delete(plan: PlanEntity) = dao.delete(plan)
