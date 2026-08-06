@@ -1,5 +1,6 @@
 package com.svapravrithi.app.ui.screens.analytics
 
+import com.svapravrithi.app.domain.model.formatAmount
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
+import com.svapravrithi.app.ui.theme.LocalCurrency
 import com.svapravrithi.app.ui.components.BudgetProgressBar
 import com.svapravrithi.app.ui.components.DonutChart
 import com.svapravrithi.app.ui.components.DonutSlice
@@ -38,6 +40,7 @@ import com.svapravrithi.app.ui.theme.Tamasik
 @Composable
 fun SpendingAnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
+    val currency = LocalCurrency.current
     val f = state.financials
 
     Scaffold(
@@ -67,7 +70,7 @@ fun SpendingAnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = 
                             DonutSlice("Pleasures", f.actualPleasures, Tamasik),
                         ),
                         size = 160.dp,
-                        centerLabel = "₹${"%,.0f".format(total)}",
+                        centerLabel = "${currency.symbol}${formatAmount(total, currency)}",
                         centerSubLabel = "Total Spent",
                     )
                 }

@@ -33,9 +33,9 @@ class UpdateSavingsViewModel @Inject constructor(
             repository.get(yearMonth)?.let { existing ->
                 _uiState.value = _uiState.value.copy(
                     savingsGoal = existing.savingsGoal,
-                    actualSavingsInput = if (existing.actualSavings == 0.0) "" else existing.actualSavings.let {
+                    actualSavingsInput = existing.actualSavings?.let {
                         if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
-                    },
+                    } ?: "",
                 )
             }
         }
@@ -43,20 +43,24 @@ class UpdateSavingsViewModel @Inject constructor(
 
     fun onAmountChange(value: String) { _uiState.value = _uiState.value.copy(actualSavingsInput = value, saved = false) }
 
-    fun save() {
+    fun save(onDone: () -> Unit) {
         val state = _uiState.value
         viewModelScope.launch {
             _uiState.value = state.copy(isSaving = true)
             val existing = repository.get(state.yearMonth)
-            val updated = (existing ?: com.svapravrithi.app.data.local.entity.DeclarationEntity(
+            val fallback = existing ?: com.svapravrithi.app.data.local.entity.DeclarationEntity(
                 yearMonth = state.yearMonth,
                 savingsGoal = state.savingsGoal,
                 needsBudget = 0.0,
                 wantsBudget = 0.0,
                 pleasuresBudget = 0.0,
-            )).copy(actualSavings = state.actualSavingsInput.toDoubleOrNull() ?: 0.0)
+            )
+            // Blank input intentionally saves null ("not tracked yet"), not 0 - an
+            // explicit 0 is a real recorded shortfall; blank means "haven't updated yet".
+            val updated = fallback.copy(actualSavings = state.actualSavingsInput.toDoubleOrNull())
             repository.save(updated)
             _uiState.value = _uiState.value.copy(isSaving = false, saved = true)
+            onDone()
         }
     }
 }

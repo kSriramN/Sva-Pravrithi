@@ -19,6 +19,14 @@ object DateUtil {
         return monthLabelFormat.format(cal.time)
     }
 
+    /** Shifts a "yyyyMM" key by [delta] months (negative = earlier, positive = later). */
+    fun addMonths(yearMonth: String, delta: Int): String {
+        val cal = Calendar.getInstance()
+        cal.set(yearMonth.substring(0, 4).toInt(), yearMonth.substring(4, 6).toInt() - 1, 1)
+        cal.add(Calendar.MONTH, delta)
+        return monthKeyFormat.format(cal.time)
+    }
+
     fun dayLabel(epochMillis: Long): String = dayLabelFormat.format(Calendar.getInstance().apply { timeInMillis = epochMillis }.time)
 
     fun startOfDay(epochMillis: Long): Long = Calendar.getInstance().apply {

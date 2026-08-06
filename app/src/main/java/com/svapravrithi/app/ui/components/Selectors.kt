@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.svapravrithi.app.domain.model.ExpenseType
 import com.svapravrithi.app.domain.model.Guna
+import com.svapravrithi.app.domain.model.PaymentMethod
 
 @Composable
 fun GunaSelector(
@@ -46,6 +47,28 @@ fun TypeSelector(
                 selected = selected == type,
                 onClick = { onSelect(type) },
                 label = { androidx.compose.material3.Text(type.label) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = androidx.compose.ui.graphics.Color.White,
+                ),
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+fun PaymentMethodSelector(
+    selected: PaymentMethod?,
+    onSelect: (PaymentMethod) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        PaymentMethod.entries.forEach { method ->
+            FilterChip(
+                selected = selected == method,
+                onClick = { onSelect(method) },
+                label = { androidx.compose.material3.Text(method.label) },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = MaterialTheme.colorScheme.primary,
                     selectedLabelColor = androidx.compose.ui.graphics.Color.White,

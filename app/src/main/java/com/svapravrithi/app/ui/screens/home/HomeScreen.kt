@@ -1,6 +1,8 @@
 package com.svapravrithi.app.ui.screens.home
 
+import com.svapravrithi.app.domain.model.formatAmount
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +17,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
@@ -24,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,9 +36,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
+import com.svapravrithi.app.ui.theme.LocalCurrency
 import com.svapravrithi.app.ui.components.BudgetProgressBar
 import com.svapravrithi.app.ui.components.GunaMandala
 import com.svapravrithi.app.ui.components.SvaCard
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -45,6 +52,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val currency = LocalCurrency.current
 
     Column(
         modifier = Modifier
@@ -75,24 +83,45 @@ fun HomeScreen(
         }
 
         SvaCard {
-            Text(
-                "Current Spending Reflection",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                IconButton(onClick = { viewModel.changeMonth(-1) }) {
+                    Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous month")
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        "Current Spending Reflection",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        DateUtil.monthLabel(state.yearMonth),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                IconButton(onClick = { viewModel.changeMonth(1) }) {
+                    Icon(Icons.Filled.ChevronRight, contentDescription = "Next month")
+                }
+            }
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 GunaMandala(distribution = state.gunaDistribution, size = 170.dp)
             }
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("₹${"%,.0f".format(state.totalSpent)} spent this month", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(DateUtil.monthLabel(state.yearMonth), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            Text(
+                "${currency.symbol}${formatAmount(state.totalSpent, currency)} spent this month",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
         val pagerState = rememberPagerState(pageCount = { 3 })
+        val pagerScope = rememberCoroutineScope()
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 listOf("Needs", "Wants", "Pleasures").forEachIndexed { index, label ->
@@ -102,7 +131,9 @@ fun HomeScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .clickable { pagerScope.launch { pagerState.animateScrollToPage(index) } },
                     )
                 }
             }
@@ -116,7 +147,7 @@ fun HomeScreen(
                 SvaCard {
                     Text("Total Spent", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
-                        "₹${"%,.0f".format(breakdown.total)}",
+                        "${currency.symbol}${formatAmount(breakdown.total, currency)}",
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -145,7 +176,7 @@ fun HomeScreen(
                                     Text(expense.category, style = MaterialTheme.typography.bodyLarge)
                                     Text(DateUtil.dayLabel(expense.date), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Text("₹${"%,.0f".format(expense.amount)}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                                Text("${currency.symbol}${formatAmount(expense.amount, currency)}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
                             }
                         }
                     }

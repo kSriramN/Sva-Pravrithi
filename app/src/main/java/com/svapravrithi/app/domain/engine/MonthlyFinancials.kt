@@ -12,7 +12,7 @@ data class MonthlyFinancials(
     val needsBudget: Double,
     val wantsBudget: Double,
     val pleasuresBudget: Double,
-    val actualSavings: Double,
+    val actualSavings: Double?,
     val actualNeeds: Double,
     val actualWants: Double,
     val actualPleasures: Double,

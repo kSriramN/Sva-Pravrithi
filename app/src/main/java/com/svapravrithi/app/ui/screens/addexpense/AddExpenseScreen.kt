@@ -34,10 +34,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.svapravrithi.app.ui.components.CurrencyVisualTransformation
 import com.svapravrithi.app.ui.components.GunaSelector
+import com.svapravrithi.app.ui.components.PaymentMethodSelector
 import com.svapravrithi.app.ui.components.PrimaryButton
 import com.svapravrithi.app.ui.components.SvaCard
 import com.svapravrithi.app.ui.components.TypeSelector
+import com.svapravrithi.app.ui.theme.LocalCurrency
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +50,8 @@ fun AddExpenseScreen(
     viewModel: AddExpenseViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val categories by viewModel.categories.collectAsState()
+    val currency = LocalCurrency.current
     var categoryMenuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -74,8 +79,9 @@ fun AddExpenseScreen(
                 value = state.amount,
                 onValueChange = viewModel::onAmountChange,
                 label = { Text("Amount") },
-                leadingIcon = { Text("₹", style = MaterialTheme.typography.titleMedium) },
+                leadingIcon = { Text(currency.symbol, style = MaterialTheme.typography.titleMedium) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = CurrencyVisualTransformation(currency),
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -92,7 +98,7 @@ fun AddExpenseScreen(
                     modifier = Modifier.fillMaxWidth().menuAnchor(),
                 )
                 DropdownMenu(expanded = categoryMenuExpanded, onDismissRequest = { categoryMenuExpanded = false }) {
-                    EXPENSE_CATEGORIES.forEach { category ->
+                    categories.forEach { category ->
                         DropdownMenuItem(
                             text = { Text(category) },
                             onClick = { viewModel.onCategoryChange(category); categoryMenuExpanded = false },
@@ -114,6 +120,11 @@ fun AddExpenseScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 GunaSelector(selected = state.guna, onSelect = viewModel::onGunaChange)
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Payment Method (Optional)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                PaymentMethodSelector(selected = state.paymentMethod, onSelect = viewModel::onPaymentMethodChange)
             }
 
             Text(

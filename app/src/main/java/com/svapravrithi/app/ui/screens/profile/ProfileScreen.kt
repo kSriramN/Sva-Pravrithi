@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.CalendarViewMonth
 import androidx.compose.material.icons.filled.Category
@@ -40,22 +41,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.svapravrithi.app.ui.components.SvaCard
 
-private data class SettingsRow(val icon: ImageVector, val label: String, val action: ProfileAction = ProfileAction.NONE)
+private data class SettingsRow(val icon: ImageVector, val label: String, val action: ProfileAction)
 
-private enum class ProfileAction { NONE, UPDATE_SAVINGS, BACKUP_RESTORE }
+private enum class ProfileAction { MONTHLY_DECLARATIONS, UPDATE_SAVINGS, CATEGORIES, SCORING_SETTINGS, CURRENCY, BACKUP_RESTORE, HELP_SUPPORT, ABOUT }
 
 private val settingsRows = listOf(
-    SettingsRow(Icons.Filled.CalendarViewMonth, "Monthly Declarations"),
+    SettingsRow(Icons.Filled.CalendarViewMonth, "Monthly Declarations", ProfileAction.MONTHLY_DECLARATIONS),
     SettingsRow(Icons.Filled.Savings, "Update Savings", ProfileAction.UPDATE_SAVINGS),
-    SettingsRow(Icons.Filled.Category, "Categories"),
-    SettingsRow(Icons.Filled.Settings, "Scoring Settings"),
+    SettingsRow(Icons.Filled.Category, "Categories", ProfileAction.CATEGORIES),
+    SettingsRow(Icons.Filled.Settings, "Scoring Settings", ProfileAction.SCORING_SETTINGS),
+    SettingsRow(Icons.Filled.AttachMoney, "Currency", ProfileAction.CURRENCY),
     SettingsRow(Icons.Filled.Backup, "Backup & Restore", ProfileAction.BACKUP_RESTORE),
-    SettingsRow(Icons.AutoMirrored.Filled.HelpOutline, "Help & Support"),
-    SettingsRow(Icons.Filled.Info, "About Sva-Pravrithi"),
+    SettingsRow(Icons.AutoMirrored.Filled.HelpOutline, "Help & Support", ProfileAction.HELP_SUPPORT),
+    SettingsRow(Icons.Filled.Info, "About Sva-Pravrithi", ProfileAction.ABOUT),
 )
 
 @Composable
-fun ProfileScreen(onBack: () -> Unit, onUpdateSavings: () -> Unit, onBackupRestore: () -> Unit) {
+fun ProfileScreen(
+    onBack: () -> Unit,
+    onMonthlyDeclarations: () -> Unit,
+    onUpdateSavings: () -> Unit,
+    onCategories: () -> Unit,
+    onScoringSettings: () -> Unit,
+    onBackupRestore: () -> Unit,
+    onHelpSupport: () -> Unit,
+    onAbout: () -> Unit,
+    onCurrency: () -> Unit,
+) {
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -94,9 +107,14 @@ fun ProfileScreen(onBack: () -> Unit, onUpdateSavings: () -> Unit, onBackupResto
                             .fillMaxWidth()
                             .clickable {
                                 when (row.action) {
+                                    ProfileAction.MONTHLY_DECLARATIONS -> onMonthlyDeclarations()
                                     ProfileAction.UPDATE_SAVINGS -> onUpdateSavings()
+                                    ProfileAction.CATEGORIES -> onCategories()
+                                    ProfileAction.SCORING_SETTINGS -> onScoringSettings()
+                                    ProfileAction.CURRENCY -> onCurrency()
                                     ProfileAction.BACKUP_RESTORE -> onBackupRestore()
-                                    ProfileAction.NONE -> {}
+                                    ProfileAction.HELP_SUPPORT -> onHelpSupport()
+                                    ProfileAction.ABOUT -> onAbout()
                                 }
                             }
                             .padding(vertical = 12.dp),

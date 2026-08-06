@@ -22,6 +22,11 @@ sealed class Destination(val route: String) {
     data object Profile : Destination("profile")
     data object UpdateSavings : Destination("update_savings")
     data object Backup : Destination("backup")
+    data object Categories : Destination("categories")
+    data object ScoringSettings : Destination("scoring_settings")
+    data object HelpSupport : Destination("help_support")
+    data object About : Destination("about")
+    data object CurrencySettings : Destination("currency_settings")
 }
 
 /** The 4 bottom-nav destinations, matching the design reference's tab bar. */

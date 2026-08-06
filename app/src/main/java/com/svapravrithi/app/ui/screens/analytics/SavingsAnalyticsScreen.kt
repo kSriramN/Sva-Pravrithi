@@ -1,5 +1,6 @@
 package com.svapravrithi.app.ui.screens.analytics
 
+import com.svapravrithi.app.domain.model.formatAmount
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,15 +27,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
+import com.svapravrithi.app.ui.theme.LocalCurrency
 import com.svapravrithi.app.ui.components.BudgetProgressBar
+import com.svapravrithi.app.ui.components.SecondaryButton
 import com.svapravrithi.app.ui.components.SvaCard
 import com.svapravrithi.app.ui.theme.Satvik
 
 @Composable
-fun SavingsAnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = hiltViewModel()) {
+fun SavingsAnalyticsScreen(
+    onBack: () -> Unit,
+    onUpdateSavings: () -> Unit,
+    viewModel: AnalyticsViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsState()
+    val currency = LocalCurrency.current
     val f = state.financials
-    val achievementPct = if (f.savingsGoal > 0) (f.actualSavings / f.savingsGoal * 100).toInt() else 0
+    val actualSavings = f.actualSavings
+    val achievementPct = if (f.savingsGoal > 0 && actualSavings != null) (actualSavings / f.savingsGoal * 100).toInt() else null
 
     Scaffold(
         topBar = {
@@ -53,16 +62,35 @@ fun SavingsAnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = h
 
             SvaCard {
                 Text("Savings Goal", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("₹${"%,.0f".format(f.savingsGoal)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
+                Text("${currency.symbol}${formatAmount(f.savingsGoal, currency)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
                 androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
                 Text("Actual Saved", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    Text("₹${"%,.0f".format(f.actualSavings)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, color = Satvik)
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
-                    Text("$achievementPct%", style = MaterialTheme.typography.titleMedium, color = Satvik)
+
+                if (actualSavings == null) {
+                    Text(
+                        "Not updated yet this month",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        "Your Savings Score won't count this as a shortfall until you record it \u2014 it's simply untracked so far.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
+                    SecondaryButton(text = "Update Savings Now", onClick = onUpdateSavings)
+                } else {
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Text("${currency.symbol}${formatAmount(actualSavings, currency)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, color = Satvik)
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
+                        achievementPct?.let {
+                            Text("$it%", style = MaterialTheme.typography.titleMedium, color = Satvik)
+                        }
+                    }
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
+                    BudgetProgressBar("Progress", actualSavings.coerceAtLeast(0.0), f.savingsGoal.coerceAtLeast(1.0), Satvik)
                 }
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
-                BudgetProgressBar("Progress", f.actualSavings.coerceAtLeast(0.0), f.savingsGoal.coerceAtLeast(1.0), Satvik)
             }
 
             SvaCard {
@@ -76,7 +104,11 @@ fun SavingsAnalyticsScreen(onBack: () -> Unit, viewModel: AnalyticsViewModel = h
                 )
                 val delta = state.reflection.savings.delta.toInt()
                 Text(
-                    if (delta >= 0) "(+$delta points)" else "($delta points)",
+                    when {
+                        actualSavings == null -> "Not counted yet \u2014 update your savings to see a real score"
+                        delta >= 0 -> "(+$delta points)"
+                        else -> "($delta points)"
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

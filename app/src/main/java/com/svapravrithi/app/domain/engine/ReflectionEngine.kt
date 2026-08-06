@@ -28,8 +28,8 @@ data class ReflectionResult(
  */
 class ReflectionEngine(private val config: ScoringConfig = ScoringConfig()) {
 
-    fun computeSavingsScore(goal: Double, actual: Double): CategoryScore {
-        if (goal <= 0.0) return CategoryScore(config.baseScore, 0.0)
+    fun computeSavingsScore(goal: Double, actual: Double?): CategoryScore {
+        if (goal <= 0.0 || actual == null) return CategoryScore(config.baseScore, 0.0)
         val delta = when {
             actual == goal -> 0.0
             actual > goal -> {
@@ -59,7 +59,7 @@ class ReflectionEngine(private val config: ScoringConfig = ScoringConfig()) {
 
     fun computeReflection(
         savingsGoal: Double,
-        savingsActual: Double,
+        savingsActual: Double?,
         wantsBudget: Double,
         wantsActual: Double,
         pleasuresBudget: Double,

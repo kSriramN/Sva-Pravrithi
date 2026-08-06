@@ -1,5 +1,6 @@
 package com.svapravrithi.app.ui.screens.plan
 
+import com.svapravrithi.app.domain.model.formatAmount
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.data.local.entity.PlanEntity
 import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.domain.model.PlanPriority
+import com.svapravrithi.app.ui.theme.LocalCurrency
 
 @Composable
 fun PlanListScreen(
@@ -91,6 +93,7 @@ fun PlanListScreen(
 
 @Composable
 private fun PlanRow(plan: PlanEntity, onClick: () -> Unit, onComplete: () -> Unit) {
+    val currency = LocalCurrency.current
     Card(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
@@ -107,7 +110,7 @@ private fun PlanRow(plan: PlanEntity, onClick: () -> Unit, onComplete: () -> Uni
                 }
                 androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
                 Text(
-                    "₹${"%,.0f".format(plan.estimatedAmount)} · ${plan.type.label} · ${plan.guna.label}",
+                    "${currency.symbol}${formatAmount(plan.estimatedAmount, currency)} · ${plan.type.label} · ${plan.guna.label}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -40,8 +40,17 @@ fun BackupScreen(onBack: () -> Unit, viewModel: BackupViewModel = hiltViewModel(
     val state by viewModel.uiState.collectAsState()
 
     val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        viewModel.onSignInResult(task.result)
+        try {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
+            viewModel.onSignInResult(account)
+        } catch (e: com.google.android.gms.common.api.ApiException) {
+            // Most common cause here: the Google Cloud OAuth Client ID for this app's
+            // package name + signing certificate hasn't been set up yet (see README's
+            // "Enable Google Drive backup" section) - that shows up as a DEVELOPER_ERROR
+            // (status code 10). Surface it instead of letting it crash the app.
+            viewModel.onSignInError(e)
+        }
     }
 
     Scaffold(

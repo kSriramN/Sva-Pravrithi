@@ -15,9 +15,11 @@ import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.domain.model.ExpenseType
 import com.svapravrithi.app.domain.model.Guna
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -38,7 +40,7 @@ data class HomeUiState(
     val wants: TypeBreakdown = TypeBreakdown(ExpenseType.WANT, 0.0, 0.0, emptyList()),
     val pleasures: TypeBreakdown = TypeBreakdown(ExpenseType.PLEASURE, 0.0, 0.0, emptyList()),
     val savingsGoal: Double = 0.0,
-    val actualSavings: Double = 0.0,
+    val actualSavings: Double? = null,
     val totalSpent: Double = 0.0,
     val reflectionScore: Int = 0,
     val isLoading: Boolean = true,
@@ -52,63 +54,69 @@ class HomeViewModel @Inject constructor(
     scoringConfigRepository: ScoringConfigRepository,
 ) : ViewModel() {
 
-    private val yearMonth = DateUtil.currentYearMonth()
+    private val _selectedYearMonth = MutableStateFlow(DateUtil.currentYearMonth())
 
-    val uiState: StateFlow<HomeUiState> = combine(
-        expenseRepository.observeForMonth(yearMonth),
-        planRepository.observeForMonth(yearMonth),
-        declarationRepository.observe(yearMonth),
-        scoringConfigRepository.observe(),
-    ) { expenses, plans, declaration, config ->
-        fun breakdown(type: ExpenseType, budget: Double): TypeBreakdown {
-            val forType = expenses.filter { it.type == type }
-            val plannedForType = plans.filter { !it.isCompleted && it.type == type }.sumOf { it.estimatedAmount }
-            return TypeBreakdown(
-                type = type,
-                total = forType.sumOf { it.amount },
-                budget = budget,
-                recent = forType.sortedByDescending { it.date }.take(5),
-                planned = plannedForType,
+    val uiState: StateFlow<HomeUiState> = _selectedYearMonth.flatMapLatest { yearMonth ->
+        combine(
+            expenseRepository.observeForMonth(yearMonth),
+            planRepository.observeForMonth(yearMonth),
+            declarationRepository.observe(yearMonth),
+            scoringConfigRepository.observe(),
+        ) { expenses, plans, declaration, config ->
+            fun breakdown(type: ExpenseType, budget: Double): TypeBreakdown {
+                val forType = expenses.filter { it.type == type }
+                val plannedForType = plans.filter { !it.isCompleted && it.type == type }.sumOf { it.estimatedAmount }
+                return TypeBreakdown(
+                    type = type,
+                    total = forType.sumOf { it.amount },
+                    budget = budget,
+                    recent = forType.sortedByDescending { it.date }.take(5),
+                    planned = plannedForType,
+                )
+            }
+
+            val needsTotal = expenses.filter { it.type == ExpenseType.NEED }.sumOf { it.amount }
+            val wantsTotal = expenses.filter { it.type == ExpenseType.WANT }.sumOf { it.amount }
+            val pleasuresTotal = expenses.filter { it.type == ExpenseType.PLEASURE }.sumOf { it.amount }
+
+            val financials = MonthlyFinancials(
+                savingsGoal = declaration?.savingsGoal ?: 0.0,
+                needsBudget = declaration?.needsBudget ?: 0.0,
+                wantsBudget = declaration?.wantsBudget ?: 0.0,
+                pleasuresBudget = declaration?.pleasuresBudget ?: 0.0,
+                actualSavings = declaration?.actualSavings,
+                actualNeeds = needsTotal,
+                actualWants = wantsTotal,
+                actualPleasures = pleasuresTotal,
+            )
+
+            val reflection = ReflectionEngine(config).computeReflection(
+                savingsGoal = financials.savingsGoal,
+                savingsActual = financials.actualSavings,
+                wantsBudget = financials.wantsBudget,
+                wantsActual = financials.actualWants,
+                pleasuresBudget = financials.pleasuresBudget,
+                pleasuresActual = financials.actualPleasures,
+            )
+            val gunaResult = DominantGunaEngine().compute(reflection, config)
+
+            HomeUiState(
+                yearMonth = yearMonth,
+                gunaDistribution = GunaDistribution(gunaResult.visualWeights, gunaResult.dominant),
+                gunaReason = gunaResult.reason,
+                needs = breakdown(ExpenseType.NEED, budget = financials.needsBudget),
+                wants = breakdown(ExpenseType.WANT, budget = financials.wantsBudget),
+                pleasures = breakdown(ExpenseType.PLEASURE, budget = financials.pleasuresBudget),
+                savingsGoal = financials.savingsGoal,
+                actualSavings = financials.actualSavings,
+                totalSpent = expenses.sumOf { it.amount },
+                reflectionScore = reflection.roundedTotal,
+                isLoading = false,
             )
         }
-
-        val needsTotal = expenses.filter { it.type == ExpenseType.NEED }.sumOf { it.amount }
-        val wantsTotal = expenses.filter { it.type == ExpenseType.WANT }.sumOf { it.amount }
-        val pleasuresTotal = expenses.filter { it.type == ExpenseType.PLEASURE }.sumOf { it.amount }
-
-        val financials = MonthlyFinancials(
-            savingsGoal = declaration?.savingsGoal ?: 0.0,
-            needsBudget = declaration?.needsBudget ?: 0.0,
-            wantsBudget = declaration?.wantsBudget ?: 0.0,
-            pleasuresBudget = declaration?.pleasuresBudget ?: 0.0,
-            actualSavings = declaration?.actualSavings ?: 0.0,
-            actualNeeds = needsTotal,
-            actualWants = wantsTotal,
-            actualPleasures = pleasuresTotal,
-        )
-
-        val reflection = ReflectionEngine(config).computeReflection(
-            savingsGoal = financials.savingsGoal,
-            savingsActual = financials.actualSavings,
-            wantsBudget = financials.wantsBudget,
-            wantsActual = financials.actualWants,
-            pleasuresBudget = financials.pleasuresBudget,
-            pleasuresActual = financials.actualPleasures,
-        )
-        val gunaResult = DominantGunaEngine().compute(reflection, config)
-
-        HomeUiState(
-            yearMonth = yearMonth,
-            gunaDistribution = GunaDistribution(gunaResult.visualWeights, gunaResult.dominant),
-            gunaReason = gunaResult.reason,
-            needs = breakdown(ExpenseType.NEED, budget = financials.needsBudget),
-            wants = breakdown(ExpenseType.WANT, budget = financials.wantsBudget),
-            pleasures = breakdown(ExpenseType.PLEASURE, budget = financials.pleasuresBudget),
-            savingsGoal = financials.savingsGoal,
-            actualSavings = financials.actualSavings,
-            totalSpent = expenses.sumOf { it.amount },
-            reflectionScore = reflection.roundedTotal,
-            isLoading = false,
-        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
+
+    fun changeMonth(delta: Int) {
+        _selectedYearMonth.value = DateUtil.addMonths(_selectedYearMonth.value, delta)
+    }
 }

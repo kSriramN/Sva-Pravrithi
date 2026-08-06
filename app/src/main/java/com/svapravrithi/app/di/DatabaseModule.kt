@@ -3,8 +3,10 @@ package com.svapravrithi.app.di
 import android.content.Context
 import androidx.room.Room
 import com.svapravrithi.app.data.local.AppDatabase
+import com.svapravrithi.app.data.local.dao.CategoryDao
 import com.svapravrithi.app.data.local.dao.DeclarationDao
 import com.svapravrithi.app.data.local.dao.ExpenseDao
+import com.svapravrithi.app.data.local.dao.FaqDao
 import com.svapravrithi.app.data.local.dao.PlanDao
 import com.svapravrithi.app.data.local.dao.ScoringConfigDao
 import dagger.Module
@@ -36,4 +38,10 @@ object DatabaseModule {
 
     @Provides
     fun provideScoringConfigDao(db: AppDatabase): ScoringConfigDao = db.scoringConfigDao()
+
+    @Provides
+    fun provideCategoryDao(db: AppDatabase): CategoryDao = db.categoryDao()
+
+    @Provides
+    fun provideFaqDao(db: AppDatabase): FaqDao = db.faqDao()
 }

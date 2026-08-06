@@ -41,6 +41,7 @@ fun AddPlanScreen(
     viewModel: AddPlanViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val currency = com.svapravrithi.app.ui.theme.LocalCurrency.current
     LaunchedEffect(planId) { viewModel.load(planId) }
 
     Scaffold(
@@ -74,8 +75,9 @@ fun AddPlanScreen(
                 value = state.estimatedAmount,
                 onValueChange = viewModel::onAmountChange,
                 label = { Text("Estimated Amount") },
-                leadingIcon = { Text("₹", style = MaterialTheme.typography.titleMedium) },
+                leadingIcon = { Text(currency.symbol, style = MaterialTheme.typography.titleMedium) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = com.svapravrithi.app.ui.components.CurrencyVisualTransformation(currency),
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(

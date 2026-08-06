@@ -1,12 +1,15 @@
 package com.svapravrithi.app.ui.screens.savings
 
+import com.svapravrithi.app.domain.model.formatAmount
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -28,11 +31,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.ui.components.PrimaryButton
 import com.svapravrithi.app.ui.components.SvaCard
-import com.svapravrithi.app.ui.theme.Satvik
 
 @Composable
-fun UpdateSavingsScreen(onBack: () -> Unit, viewModel: UpdateSavingsViewModel = hiltViewModel()) {
+fun UpdateSavingsScreen(onBack: () -> Unit, onSaved: () -> Unit, viewModel: UpdateSavingsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
+    val currency = com.svapravrithi.app.ui.theme.LocalCurrency.current
 
     Scaffold(
         topBar = {
@@ -44,7 +47,11 @@ fun UpdateSavingsScreen(onBack: () -> Unit, viewModel: UpdateSavingsViewModel = 
         },
     ) { padding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(20.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(20.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(DateUtil.monthLabel(state.yearMonth), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -56,24 +63,21 @@ fun UpdateSavingsScreen(onBack: () -> Unit, viewModel: UpdateSavingsViewModel = 
 
             SvaCard {
                 Text("Savings Goal", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("₹${"%,.0f".format(state.savingsGoal)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
+                Text("${currency.symbol}${formatAmount(state.savingsGoal, currency)}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
             }
 
             OutlinedTextField(
                 value = state.actualSavingsInput,
                 onValueChange = viewModel::onAmountChange,
                 label = { Text("Actual Savings Set Aside") },
-                leadingIcon = { Text("₹", style = MaterialTheme.typography.titleMedium) },
+                leadingIcon = { Text(currency.symbol, style = MaterialTheme.typography.titleMedium) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = com.svapravrithi.app.ui.components.CurrencyVisualTransformation(currency),
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            if (state.saved) {
-                Text("Saved!", style = MaterialTheme.typography.bodyMedium, color = Satvik)
-            }
-
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
-            PrimaryButton(text = "Save", enabled = !state.isSaving, onClick = { viewModel.save() })
+            PrimaryButton(text = "Save", enabled = !state.isSaving, onClick = { viewModel.save(onSaved) })
         }
     }
 }

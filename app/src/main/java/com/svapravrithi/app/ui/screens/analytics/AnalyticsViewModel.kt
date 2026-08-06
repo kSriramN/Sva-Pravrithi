@@ -39,6 +39,8 @@ data class AnalyticsUiState(
     val reflection: ReflectionResult = ReflectionEngine().computeReflection(0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
     val gunaDistribution: GunaDistribution = GunaDistribution(Guna.entries.associateWith { 0.0 }, Guna.SATVIK),
     val gunaReason: String = "",
+    /** True once the user has completed a Monthly Declaration for this month. */
+    val hasDeclaration: Boolean = false,
     /** Optional per-expense Guna tags, for the secondary "personal reflection" chart only. */
     val taggedGunaSpend: Map<Guna, Double> = emptyMap(),
     /** Upcoming/planned spend by type \u2014 indicator only, excluded from all scoring. */
@@ -71,7 +73,7 @@ class AnalyticsViewModel @Inject constructor(
             needsBudget = declaration?.needsBudget ?: 0.0,
             wantsBudget = declaration?.wantsBudget ?: 0.0,
             pleasuresBudget = declaration?.pleasuresBudget ?: 0.0,
-            actualSavings = declaration?.actualSavings ?: 0.0,
+            actualSavings = declaration?.actualSavings,
             actualNeeds = needsTotal,
             actualWants = wantsTotal,
             actualPleasures = pleasuresTotal,
@@ -106,6 +108,7 @@ class AnalyticsViewModel @Inject constructor(
             reflection = reflection,
             gunaDistribution = GunaDistribution(gunaResult.visualWeights, gunaResult.dominant),
             gunaReason = gunaResult.reason,
+            hasDeclaration = declaration != null,
             taggedGunaSpend = taggedSpend,
             planned = planned,
             isLoading = false,

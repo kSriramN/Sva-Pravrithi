@@ -1,9 +1,11 @@
 package com.svapravrithi.app.ui.navigation
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -28,6 +30,11 @@ import com.svapravrithi.app.ui.screens.plan.PlanListScreen
 import com.svapravrithi.app.ui.screens.profile.ProfileScreen
 import com.svapravrithi.app.ui.screens.reflection.MonthlyReflectionScreen
 import com.svapravrithi.app.ui.screens.savings.UpdateSavingsScreen
+import com.svapravrithi.app.ui.screens.settings.AboutScreen
+import com.svapravrithi.app.ui.screens.settings.CategoriesScreen
+import com.svapravrithi.app.ui.screens.settings.CurrencySettingsScreen
+import com.svapravrithi.app.ui.screens.settings.HelpSupportScreen
+import com.svapravrithi.app.ui.screens.settings.ScoringSettingsScreen
 import com.svapravrithi.app.ui.screens.splash.SplashScreen
 
 private val SCREENS_WITH_BOTTOM_NAV = setOf(
@@ -44,7 +51,13 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
     Scaffold(
         bottomBar = { if (showBottomBar) SvaBottomNavBar(navController) },
     ) { innerPadding ->
-        val contentModifier = if (showBottomBar) Modifier.padding(innerPadding) else Modifier.padding(PaddingValues(0.dp))
+        // Always honor Scaffold's computed safe-area padding here - previously this
+        // was forced to 0.dp for non-bottom-nav screens, which let content draw
+        // under the system nav bar. imePadding() additionally pushes content above
+        // the keyboard automatically on every screen.
+        val contentModifier = Modifier
+            .padding(innerPadding)
+            .imePadding()
         NavHost(
             navController = navController,
             startDestination = Destination.Splash.route,
@@ -119,13 +132,45 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
                     onOpenReflection = { navController.navigate(Destination.MonthlyReflection.route) },
                 )
             }
-            composable(Destination.GunaAnalytics.route) { GunaAnalyticsScreen(onBack = { navController.popBackStack() }) }
+            composable(Destination.GunaAnalytics.route) {
+                GunaAnalyticsScreen(
+                    onBack = { navController.popBackStack() },
+                    onDeclareGoals = { navController.navigate(Destination.MonthlyDeclaration.build(DateUtil.currentYearMonth())) },
+                )
+            }
             composable(Destination.SpendingAnalytics.route) { SpendingAnalyticsScreen(onBack = { navController.popBackStack() }) }
-            composable(Destination.SavingsAnalytics.route) { SavingsAnalyticsScreen(onBack = { navController.popBackStack() }) }
+            composable(Destination.SavingsAnalytics.route) {
+                SavingsAnalyticsScreen(
+                    onBack = { navController.popBackStack() },
+                    onUpdateSavings = { navController.navigate(Destination.UpdateSavings.route) },
+                )
+            }
             composable(Destination.MonthlyReflection.route) { MonthlyReflectionScreen(onBack = { navController.popBackStack() }) }
-            composable(Destination.Profile.route) { ProfileScreen(onBack = { navController.popBackStack() }, onUpdateSavings = { navController.navigate(Destination.UpdateSavings.route) }, onBackupRestore = { navController.navigate(Destination.Backup.route) }) }
-            composable(Destination.UpdateSavings.route) { UpdateSavingsScreen(onBack = { navController.popBackStack() }) }
+            composable(Destination.Profile.route) {
+                ProfileScreen(
+                    onBack = { navController.popBackStack() },
+                    onMonthlyDeclarations = { navController.navigate(Destination.MonthlyDeclaration.build(DateUtil.currentYearMonth())) },
+                    onUpdateSavings = { navController.navigate(Destination.UpdateSavings.route) },
+                    onCategories = { navController.navigate(Destination.Categories.route) },
+                    onScoringSettings = { navController.navigate(Destination.ScoringSettings.route) },
+                    onBackupRestore = { navController.navigate(Destination.Backup.route) },
+                    onHelpSupport = { navController.navigate(Destination.HelpSupport.route) },
+                    onAbout = { navController.navigate(Destination.About.route) },
+                    onCurrency = { navController.navigate(Destination.CurrencySettings.route) },
+                )
+            }
+            composable(Destination.UpdateSavings.route) {
+                UpdateSavingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onSaved = { navController.popBackStack() },
+                )
+            }
             composable(Destination.Backup.route) { BackupScreen(onBack = { navController.popBackStack() }) }
+            composable(Destination.Categories.route) { CategoriesScreen(onBack = { navController.popBackStack() }) }
+            composable(Destination.ScoringSettings.route) { ScoringSettingsScreen(onBack = { navController.popBackStack() }) }
+            composable(Destination.HelpSupport.route) { HelpSupportScreen(onBack = { navController.popBackStack() }) }
+            composable(Destination.About.route) { AboutScreen(onBack = { navController.popBackStack() }) }
+            composable(Destination.CurrencySettings.route) { CurrencySettingsScreen(onBack = { navController.popBackStack() }) }
         }
     }
 }

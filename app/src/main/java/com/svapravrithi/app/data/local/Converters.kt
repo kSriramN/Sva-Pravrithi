@@ -3,6 +3,7 @@ package com.svapravrithi.app.data.local
 import androidx.room.TypeConverter
 import com.svapravrithi.app.domain.model.ExpenseType
 import com.svapravrithi.app.domain.model.Guna
+import com.svapravrithi.app.domain.model.PaymentMethod
 import com.svapravrithi.app.domain.model.PlanPriority
 
 class Converters {
@@ -23,4 +24,10 @@ class Converters {
 
     @TypeConverter
     fun toPriority(value: String): PlanPriority = PlanPriority.valueOf(value)
+
+    @TypeConverter
+    fun fromPaymentMethod(value: PaymentMethod?): String? = value?.name
+
+    @TypeConverter
+    fun toPaymentMethod(value: String?): PaymentMethod? = value?.let { PaymentMethod.valueOf(it) }
 }

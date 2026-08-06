@@ -32,15 +32,21 @@ class MonthlyDeclarationViewModel @Inject constructor(
     fun load(yearMonth: String) {
         _uiState.value = _uiState.value.copy(yearMonth = yearMonth)
         viewModelScope.launch {
-            repository.get(yearMonth)?.let { existing ->
-                _uiState.value = _uiState.value.copy(
-                    savingsGoal = existing.savingsGoal.toPlainStringOrEmpty(),
-                    needsBudget = existing.needsBudget.toPlainStringOrEmpty(),
-                    wantsBudget = existing.wantsBudget.toPlainStringOrEmpty(),
-                    pleasuresBudget = existing.pleasuresBudget.toPlainStringOrEmpty(),
-                )
-            }
+            val existing = repository.get(yearMonth)
+            // Explicitly reset every field when the target month has no declaration yet -
+            // otherwise switching months would leave the previous month's typed values
+            // on screen, looking like they belong to the new month.
+            _uiState.value = _uiState.value.copy(
+                savingsGoal = existing?.savingsGoal?.toPlainStringOrEmpty() ?: "",
+                needsBudget = existing?.needsBudget?.toPlainStringOrEmpty() ?: "",
+                wantsBudget = existing?.wantsBudget?.toPlainStringOrEmpty() ?: "",
+                pleasuresBudget = existing?.pleasuresBudget?.toPlainStringOrEmpty() ?: "",
+            )
         }
+    }
+
+    fun changeMonth(delta: Int) {
+        load(DateUtil.addMonths(_uiState.value.yearMonth, delta))
     }
 
     fun onSavingsGoalChange(value: String) { _uiState.value = _uiState.value.copy(savingsGoal = value) }
@@ -52,7 +58,7 @@ class MonthlyDeclarationViewModel @Inject constructor(
         val state = _uiState.value
         viewModelScope.launch {
             _uiState.value = state.copy(isSaving = true)
-            val existingActualSavings = repository.get(state.yearMonth)?.actualSavings ?: 0.0
+            val existingActualSavings = repository.get(state.yearMonth)?.actualSavings
             repository.save(
                 DeclarationEntity(
                     yearMonth = state.yearMonth,

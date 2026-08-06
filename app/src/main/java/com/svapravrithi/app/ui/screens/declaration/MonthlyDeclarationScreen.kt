@@ -2,6 +2,7 @@ package com.svapravrithi.app.ui.screens.declaration
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,6 +12,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +43,7 @@ fun MonthlyDeclarationScreen(
     viewModel: MonthlyDeclarationViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val currency = com.svapravrithi.app.ui.theme.LocalCurrency.current
 
     LaunchedEffect(yearMonth) { viewModel.load(yearMonth) }
 
@@ -64,11 +68,23 @@ fun MonthlyDeclarationScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                DateUtil.monthLabel(state.yearMonth),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                IconButton(onClick = { viewModel.changeMonth(-1) }) {
+                    Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous month")
+                }
+                Text(
+                    DateUtil.monthLabel(state.yearMonth),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                IconButton(onClick = { viewModel.changeMonth(1) }) {
+                    Icon(Icons.Filled.ChevronRight, contentDescription = "Next month")
+                }
+            }
             Text(
                 "Declare your monthly goals",
                 style = MaterialTheme.typography.headlineMedium,
@@ -81,8 +97,9 @@ fun MonthlyDeclarationScreen(
                 OutlinedTextField(
                     value = state.savingsGoal,
                     onValueChange = viewModel::onSavingsGoalChange,
-                    label = { Text("₹ Amount") },
+                    label = { Text("${currency.symbol} Amount") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = com.svapravrithi.app.ui.components.CurrencyVisualTransformation(currency),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -93,8 +110,9 @@ fun MonthlyDeclarationScreen(
                 OutlinedTextField(
                     value = state.needsBudget,
                     onValueChange = viewModel::onNeedsBudgetChange,
-                    label = { Text("₹ Amount") },
+                    label = { Text("${currency.symbol} Amount") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = com.svapravrithi.app.ui.components.CurrencyVisualTransformation(currency),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -105,8 +123,9 @@ fun MonthlyDeclarationScreen(
                 OutlinedTextField(
                     value = state.wantsBudget,
                     onValueChange = viewModel::onWantsBudgetChange,
-                    label = { Text("₹ Amount") },
+                    label = { Text("${currency.symbol} Amount") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = com.svapravrithi.app.ui.components.CurrencyVisualTransformation(currency),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -117,8 +136,9 @@ fun MonthlyDeclarationScreen(
                 OutlinedTextField(
                     value = state.pleasuresBudget,
                     onValueChange = viewModel::onPleasuresBudgetChange,
-                    label = { Text("₹ Amount") },
+                    label = { Text("${currency.symbol} Amount") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = com.svapravrithi.app.ui.components.CurrencyVisualTransformation(currency),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

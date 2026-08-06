@@ -24,3 +24,10 @@ enum class PlanPriority(val label: String) {
     MEDIUM("Medium"),
     HIGH("High"),
 }
+
+/** How the expense was paid. Optional, for the user's own record-keeping only. */
+enum class PaymentMethod(val label: String) {
+    CASH("Cash"),
+    CARD("Card"),
+    ACCOUNT("Account"),
+}

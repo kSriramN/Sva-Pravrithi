@@ -1,5 +1,7 @@
 package com.svapravrithi.app.ui.components
 
+import com.svapravrithi.app.domain.model.formatAmount
+import com.svapravrithi.app.ui.theme.LocalCurrency
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +31,7 @@ fun BudgetProgressBar(
     modifier: Modifier = Modifier,
     planned: Double = 0.0,
 ) {
+    val currency = LocalCurrency.current
     val ratio = if (budget > 0) (spent / budget).toFloat().coerceIn(0f, 1f) else 0f
     val plannedRatio = if (budget > 0) ((spent + planned) / budget).toFloat().coerceIn(0f, 1f) else 0f
     val overBudget = spent > budget && budget > 0
@@ -36,7 +39,7 @@ fun BudgetProgressBar(
         Row(modifier = Modifier.fillMaxWidth()) {
             Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
             Text(
-                "₹${"%,.0f".format(spent)} / ₹${"%,.0f".format(budget)}",
+                "${currency.symbol}${formatAmount(spent, currency)} / ${currency.symbol}${formatAmount(budget, currency)}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = if (overBudget) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -69,7 +72,7 @@ fun BudgetProgressBar(
         }
         if (planned > 0) {
             Text(
-                "+ ₹${"%,.0f".format(planned)} planned (upcoming, not yet spent)",
+                "+ ${currency.symbol}${formatAmount(planned, currency)} planned (upcoming, not yet spent)",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),

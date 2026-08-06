@@ -47,6 +47,19 @@ class BackupViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(account = account)
     }
 
+    fun onSignInError(e: com.google.android.gms.common.api.ApiException) {
+        val friendly = when (e.statusCode) {
+            10 -> "Google sign-in isn't configured for this app build yet. See the README's " +
+                "\"Enable Google Drive backup\" section \u2014 it needs a one-time Google Cloud " +
+                "OAuth setup (status: DEVELOPER_ERROR)."
+            12501 -> null // user cancelled the sign-in dialog - not an error worth showing
+            else -> "Google sign-in failed (status ${e.statusCode}). ${e.message ?: ""}".trim()
+        }
+        if (friendly != null) {
+            _uiState.value = _uiState.value.copy(status = BackupStatus.ERROR, message = friendly)
+        }
+    }
+
     fun signOut() {
         driveService.signInClient.signOut()
         _uiState.value = BackupUiState()
