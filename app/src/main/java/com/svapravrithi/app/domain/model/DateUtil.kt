@@ -75,4 +75,20 @@ object DateUtil {
         timeInMillis = epochMillis
         set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
     }.timeInMillis
+
+    /**
+     * Compose's DatePicker returns the selected date as UTC-midnight millis, not
+     * local-midnight - for timezones behind UTC, using that value directly can shift
+     * the displayed date back by one day. This extracts the intended calendar date
+     * (year/month/day) from the UTC value, then rebuilds it as local-midnight millis,
+     * which is what the rest of the app (startOfDay, yearMonthOf, cycleKeyFor) expects.
+     */
+    fun fromDatePickerMillis(utcMidnightMillis: Long): Long {
+        val utcCal = Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply { timeInMillis = utcMidnightMillis }
+        val localCal = Calendar.getInstance().apply {
+            set(utcCal.get(Calendar.YEAR), utcCal.get(Calendar.MONTH), utcCal.get(Calendar.DAY_OF_MONTH), 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return localCal.timeInMillis
+    }
 }

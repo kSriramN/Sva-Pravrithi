@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.PieChart
-import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +35,6 @@ import com.svapravrithi.app.ui.theme.LocalMonthStartDay
 fun AnalyticsOverviewScreen(
     onOpenGuna: () -> Unit,
     onOpenSpending: () -> Unit,
-    onOpenSavings: () -> Unit,
     onOpenReflection: () -> Unit,
     viewModel: AnalyticsViewModel = hiltViewModel(),
 ) {
@@ -67,7 +65,6 @@ fun AnalyticsOverviewScreen(
 
         AnalyticsLink(icon = Icons.Filled.SelfImprovement, title = "Guna Analytics", subtitle = "Sattvik / Rajasik / Tamasik distribution", onClick = onOpenGuna)
         AnalyticsLink(icon = Icons.Filled.PieChart, title = "Spending Analytics", subtitle = "Needs, Wants & Pleasures breakdown", onClick = onOpenSpending)
-        AnalyticsLink(icon = Icons.Filled.Savings, title = "Savings Analytics", subtitle = "Goal progress & savings score", onClick = onOpenSavings)
         AnalyticsLink(icon = Icons.Filled.BarChart, title = "Monthly Reflection", subtitle = "Full breakdown & insight", onClick = onOpenReflection)
     }
 }

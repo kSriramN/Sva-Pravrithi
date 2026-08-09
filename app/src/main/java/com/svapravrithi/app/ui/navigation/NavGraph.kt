@@ -19,7 +19,6 @@ import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.ui.screens.addexpense.AddExpenseScreen
 import com.svapravrithi.app.ui.screens.analytics.AnalyticsOverviewScreen
 import com.svapravrithi.app.ui.screens.analytics.GunaAnalyticsScreen
-import com.svapravrithi.app.ui.screens.analytics.SavingsAnalyticsScreen
 import com.svapravrithi.app.ui.screens.analytics.SpendingAnalyticsScreen
 import com.svapravrithi.app.ui.screens.backup.BackupScreen
 import com.svapravrithi.app.ui.screens.declaration.MonthlyDeclarationScreen
@@ -142,7 +141,6 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
                 AnalyticsOverviewScreen(
                     onOpenGuna = { navController.navigate(Destination.GunaAnalytics.route) },
                     onOpenSpending = { navController.navigate(Destination.SpendingAnalytics.route) },
-                    onOpenSavings = { navController.navigate(Destination.SavingsAnalytics.route) },
                     onOpenReflection = { navController.navigate(Destination.MonthlyReflection.route) },
                 )
             }
@@ -153,12 +151,6 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
                 )
             }
             composable(Destination.SpendingAnalytics.route) { SpendingAnalyticsScreen(onBack = { navController.popBackStack() }) }
-            composable(Destination.SavingsAnalytics.route) {
-                SavingsAnalyticsScreen(
-                    onBack = { navController.popBackStack() },
-                    onUpdateSavings = { navController.navigate(Destination.UpdateSavings.route) },
-                )
-            }
             composable(Destination.MonthlyReflection.route) { MonthlyReflectionScreen(onBack = { navController.popBackStack() }) }
             composable(Destination.Profile.route) {
                 ProfileScreen(

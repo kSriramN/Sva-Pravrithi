@@ -1,7 +1,9 @@
 package com.svapravrithi.app.ui.screens.plan
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,8 +13,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,11 +35,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.domain.model.PlanPriority
 import com.svapravrithi.app.ui.components.CurrencyVisualTransformation
 import com.svapravrithi.app.ui.components.GunaSelector
@@ -41,6 +51,7 @@ import com.svapravrithi.app.ui.components.PrimaryButton
 import com.svapravrithi.app.ui.components.TypeSelector
 import com.svapravrithi.app.ui.theme.LocalCurrency
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun AddPlanScreen(
     planId: Long?,
@@ -52,7 +63,13 @@ fun AddPlanScreen(
     val state by viewModel.uiState.collectAsState()
     val currency = LocalCurrency.current
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val titleFocusRequester = remember { FocusRequester() }
+    val amountFocusRequester = remember { FocusRequester() }
     LaunchedEffect(planId) { viewModel.load(planId) }
+    LaunchedEffect(state.isLoaded) {
+        if (state.isLoaded) amountFocusRequester.requestFocus()
+    }
 
     Scaffold(
         topBar = {
@@ -86,7 +103,7 @@ fun AddPlanScreen(
                 value = state.title,
                 onValueChange = viewModel::onTitleChange,
                 label = { Text("Title") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().focusRequester(titleFocusRequester),
             )
             OutlinedTextField(
                 value = state.estimatedAmount,
@@ -95,13 +112,20 @@ fun AddPlanScreen(
                 leadingIcon = { Text(currency.symbol, style = MaterialTheme.typography.titleMedium) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 visualTransformation = CurrencyVisualTransformation(currency),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().focusRequester(amountFocusRequester),
             )
-            Text(
-                "Due: ${state.dueDateLabel}",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { showDatePicker = true },
+            ) {
+                Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    "Due: ${state.dueDateLabel}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Type", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
@@ -143,6 +167,22 @@ fun AddPlanScreen(
                 enabled = !state.isSaving && !state.isDeleting,
                 onClick = { viewModel.save(onSaved) },
             )
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = state.dueDateMillis)
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { viewModel.onDueDateChange(DateUtil.fromDatePickerMillis(it)) }
+                    showDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } },
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 

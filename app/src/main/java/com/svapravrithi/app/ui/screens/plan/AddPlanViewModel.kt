@@ -28,6 +28,7 @@ data class AddPlanUiState(
     val notes: String = "",
     val isSaving: Boolean = false,
     val isDeleting: Boolean = false,
+    val isLoaded: Boolean = false,
     val error: String? = null,
 ) {
     val dueDateLabel: String get() = DateUtil.dayLabel(dueDateMillis)
@@ -46,9 +47,13 @@ class AddPlanViewModel @Inject constructor(
 
     /** Call with an existing plan's id to switch this screen into edit mode. Pass null (or don't call) for a new plan. */
     fun load(planId: Long?) {
-        if (planId == null || planId == 0L) return
+        if (planId == null || planId == 0L) {
+            _uiState.value = _uiState.value.copy(isLoaded = true)
+            return
+        }
         viewModelScope.launch {
-            repository.getById(planId)?.let { existing ->
+            val existing = repository.getById(planId)
+            if (existing != null) {
                 _uiState.value = AddPlanUiState(
                     id = existing.id,
                     title = existing.title,
@@ -58,7 +63,10 @@ class AddPlanViewModel @Inject constructor(
                     guna = existing.guna,
                     priority = existing.priority,
                     notes = existing.notes,
+                    isLoaded = true,
                 )
+            } else {
+                _uiState.value = _uiState.value.copy(isLoaded = true)
             }
         }
     }
