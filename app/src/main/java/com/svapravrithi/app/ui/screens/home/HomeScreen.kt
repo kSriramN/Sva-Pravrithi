@@ -190,6 +190,43 @@ fun HomeScreen(
             }
         }
 
+        if (state.categoryBreakdown.isNotEmpty()) {
+            SvaCard {
+                Text("Spending by Category", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    com.svapravrithi.app.ui.components.DonutChart(
+                        slices = state.categoryBreakdown.map {
+                            com.svapravrithi.app.ui.components.DonutSlice(it.category, it.amount, it.color)
+                        },
+                        size = 160.dp,
+                        centerLabel = "${currency.symbol}${formatAmount(state.totalSpent, currency)}",
+                        centerSubLabel = "Total Spent",
+                    )
+                }
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
+                state.categoryBreakdown.forEach { slice ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                                .background(slice.color),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text("${slice.percent}%", style = MaterialTheme.typography.labelMedium, color = androidx.compose.ui.graphics.Color.White, fontWeight = FontWeight.SemiBold)
+                        }
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
+                        Text(slice.category, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                        Text("${currency.symbol}${formatAmount(slice.amount, currency)}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
+        }
+
         androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
     }
 }

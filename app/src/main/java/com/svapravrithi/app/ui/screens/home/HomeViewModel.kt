@@ -15,6 +15,7 @@ import com.svapravrithi.app.domain.engine.ReflectionEngine
 import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.domain.model.ExpenseType
 import com.svapravrithi.app.domain.model.Guna
+import com.svapravrithi.app.ui.theme.colorForCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,6 +34,13 @@ data class TypeBreakdown(
     val planned: Double = 0.0,
 )
 
+data class CategorySlice(
+    val category: String,
+    val amount: Double,
+    val percent: Int,
+    val color: androidx.compose.ui.graphics.Color,
+)
+
 data class HomeUiState(
     val yearMonth: String = DateUtil.currentYearMonth(),
     val gunaDistribution: GunaDistribution = GunaDistribution(Guna.entries.associateWith { 0.0 }, Guna.SATVIK),
@@ -44,6 +52,7 @@ data class HomeUiState(
     val actualSavings: Double? = null,
     val totalSpent: Double = 0.0,
     val reflectionScore: Int = 0,
+    val categoryBreakdown: List<CategorySlice> = emptyList(),
     val isLoading: Boolean = true,
 )
 
@@ -102,6 +111,20 @@ class HomeViewModel @Inject constructor(
             )
             val gunaResult = DominantGunaEngine().compute(reflection, config)
 
+            val totalSpentForCategories = expenses.sumOf { it.amount }.takeIf { it > 0.0 } ?: 1.0
+            val categoryBreakdown = expenses
+                .groupBy { it.category }
+                .map { (category, categoryExpenses) ->
+                    val amount = categoryExpenses.sumOf { it.amount }
+                    CategorySlice(
+                        category = category,
+                        amount = amount,
+                        percent = ((amount / totalSpentForCategories) * 100).toInt(),
+                        color = colorForCategory(category),
+                    )
+                }
+                .sortedByDescending { it.amount }
+
             HomeUiState(
                 yearMonth = yearMonth,
                 gunaDistribution = GunaDistribution(gunaResult.visualWeights, gunaResult.dominant),
@@ -113,6 +136,7 @@ class HomeViewModel @Inject constructor(
                 actualSavings = financials.actualSavings,
                 totalSpent = expenses.sumOf { it.amount },
                 reflectionScore = reflection.roundedTotal,
+                categoryBreakdown = categoryBreakdown,
                 isLoading = false,
             )
         }

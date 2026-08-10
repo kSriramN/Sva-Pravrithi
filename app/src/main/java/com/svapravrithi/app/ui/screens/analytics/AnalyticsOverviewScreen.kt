@@ -1,5 +1,6 @@
 package com.svapravrithi.app.ui.screens.analytics
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -61,6 +62,40 @@ fun AnalyticsOverviewScreen(
                 color = state.gunaDistribution.dominant.color,
             )
             Text("Predominantly ${state.gunaDistribution.dominant.label}", style = MaterialTheme.typography.bodyLarge)
+        }
+
+        run {
+            val f = state.financials
+            val typeTotal = (f.actualNeeds + f.actualWants + f.actualPleasures).takeIf { it > 0 } ?: 1.0
+            SvaCard {
+                Text("By Type", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
+                androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    com.svapravrithi.app.ui.components.DonutChart(
+                        slices = listOf(
+                            com.svapravrithi.app.ui.components.DonutSlice("Needs", f.actualNeeds, com.svapravrithi.app.ui.theme.Satvik),
+                            com.svapravrithi.app.ui.components.DonutSlice("Wants", f.actualWants, com.svapravrithi.app.ui.theme.Rajasik),
+                            com.svapravrithi.app.ui.components.DonutSlice("Pleasures", f.actualPleasures, com.svapravrithi.app.ui.theme.Tamasik),
+                        ),
+                        size = 150.dp,
+                    )
+                }
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
+                listOf(
+                    Triple("Needs", f.actualNeeds, com.svapravrithi.app.ui.theme.Satvik),
+                    Triple("Wants", f.actualWants, com.svapravrithi.app.ui.theme.Rajasik),
+                    Triple("Pleasures", f.actualPleasures, com.svapravrithi.app.ui.theme.Tamasik),
+                ).forEach { (label, amount, color) ->
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        androidx.compose.foundation.layout.Box(
+                            modifier = Modifier.size(10.dp).background(color, androidx.compose.foundation.shape.CircleShape),
+                        )
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
+                        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                        Text("${((amount / typeTotal) * 100).toInt()}%", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
         }
 
         AnalyticsLink(icon = Icons.Filled.SelfImprovement, title = "Guna Analytics", subtitle = "Sattvik / Rajasik / Tamasik distribution", onClick = onOpenGuna)

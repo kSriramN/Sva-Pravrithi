@@ -13,6 +13,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
@@ -20,15 +21,16 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
@@ -43,14 +45,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
+import com.svapravrithi.app.domain.model.PaymentMethod
 import com.svapravrithi.app.ui.components.CurrencyVisualTransformation
+import com.svapravrithi.app.ui.components.FormFieldRow
 import com.svapravrithi.app.ui.components.GunaSelector
-import com.svapravrithi.app.ui.components.PaymentMethodSelector
 import com.svapravrithi.app.ui.components.PrimaryButton
 import com.svapravrithi.app.ui.components.SvaCard
 import com.svapravrithi.app.ui.components.TypeSelector
@@ -69,13 +75,12 @@ fun AddExpenseScreen(
     val categories by viewModel.categories.collectAsState()
     val currency = LocalCurrency.current
     var categoryMenuExpanded by remember { mutableStateOf(false) }
+    var showPaymentMethodSheet by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     val amountFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(expenseId) { viewModel.load(expenseId) }
-    // Auto-focus the Amount field the moment the screen opens, once any existing
-    // expense being edited has finished loading (so we don't steal focus mid-load).
     LaunchedEffect(state.isLoaded) {
         if (state.isLoaded) amountFocusRequester.requestFocus()
     }
@@ -104,37 +109,81 @@ fun AddExpenseScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(20.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            OutlinedTextField(
-                value = state.amount,
-                onValueChange = viewModel::onAmountChange,
-                label = { Text("Amount") },
-                leadingIcon = { Text(currency.symbol, style = MaterialTheme.typography.titleMedium) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                visualTransformation = CurrencyVisualTransformation(currency),
-                modifier = Modifier.fillMaxWidth().focusRequester(amountFocusRequester),
-            )
+            SvaCard {
+                Column {
+                    // Date - restyled as a flat list row matching the reference layout
+                    FormFieldRow(label = "Date", onClick = { showDatePicker = true }) {
+                        Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                        Text(state.dateLabel, style = MaterialTheme.typography.bodyLarge)
+                    }
 
-            ExposedDropdownMenuBox(
-                expanded = categoryMenuExpanded,
-                onExpandedChange = { categoryMenuExpanded = it },
-            ) {
-                OutlinedTextField(
-                    value = state.category,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Category") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryMenuExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor(),
-                )
-                DropdownMenu(expanded = categoryMenuExpanded, onDismissRequest = { categoryMenuExpanded = false }) {
-                    categories.forEach { category ->
-                        DropdownMenuItem(
-                            text = { Text(category) },
-                            onClick = { viewModel.onCategoryChange(category); categoryMenuExpanded = false },
+                    // Payment Method / Account - opens a bottom sheet picker (Cash / Card / Account)
+                    FormFieldRow(label = "Account", onClick = { showPaymentMethodSheet = true }) {
+                        Text(
+                            state.paymentMethod?.label ?: "Select",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (state.paymentMethod == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                        )
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+
+                    // Category - same dropdown menu as before, triggered from a flat row instead of a boxed field
+                    androidx.compose.foundation.layout.Box {
+                        FormFieldRow(label = "Category", onClick = { categoryMenuExpanded = true }) {
+                            Text(state.category.ifBlank { "Select" }, style = MaterialTheme.typography.bodyLarge)
+                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                            Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        DropdownMenu(expanded = categoryMenuExpanded, onDismissRequest = { categoryMenuExpanded = false }) {
+                            categories.forEach { category ->
+                                DropdownMenuItem(
+                                    text = { Text(category) },
+                                    onClick = { viewModel.onCategoryChange(category); categoryMenuExpanded = false },
+                                )
+                            }
+                        }
+                    }
+
+                    // Amount - flat, underlined, right-aligned, live comma formatting, auto-focused
+                    FormFieldRow(label = "Amount") {
+                        Text(currency.symbol, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        TextField(
+                            value = state.amount,
+                            onValueChange = viewModel::onAmountChange,
+                            textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            visualTransformation = CurrencyVisualTransformation(currency),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                            ),
+                            modifier = Modifier.weight(1f).focusRequester(amountFocusRequester),
+                        )
+                    }
+
+                    // Note - flat, matching Money Manager's "Note" field
+                    FormFieldRow(label = "Note") {
+                        TextField(
+                            value = state.comments,
+                            onValueChange = viewModel::onCommentsChange,
+                            textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize),
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                            ),
+                            modifier = Modifier.weight(1f),
                         )
                     }
                 }
@@ -155,41 +204,48 @@ fun AddExpenseScreen(
                 GunaSelector(selected = state.guna, onSelect = viewModel::onGunaChange)
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Payment Method (Optional)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
-                PaymentMethodSelector(selected = state.paymentMethod, onSelect = viewModel::onPaymentMethodChange)
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { showDatePicker = true },
-            ) {
-                Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    state.dateLabel,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            OutlinedTextField(
-                value = state.comments,
-                onValueChange = viewModel::onCommentsChange,
-                label = { Text("Comments (Optional)") },
-                modifier = Modifier.fillMaxWidth(),
-            )
-
             state.error?.let {
                 Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
 
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
             PrimaryButton(
                 text = if (state.isEditing) "Update Expense" else "Save Expense",
                 enabled = !state.isSaving && !state.isDeleting,
                 onClick = { viewModel.save(onSaved) },
             )
+
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
+        }
+    }
+
+    if (showPaymentMethodSheet) {
+        ModalBottomSheet(onDismissRequest = { showPaymentMethodSheet = false }) {
+            Text(
+                "Account",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+            )
+            PaymentMethod.entries.forEach { method ->
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                viewModel.onPaymentMethodChange(method)
+                                showPaymentMethodSheet = false
+                            }
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(method.label, style = MaterialTheme.typography.bodyLarge)
+                        Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    HorizontalDivider()
+                }
+            }
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(20.dp))
         }
     }
 
