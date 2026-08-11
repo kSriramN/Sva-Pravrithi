@@ -39,7 +39,7 @@ import com.svapravrithi.app.ui.screens.splash.SplashScreen
 
 private val SCREENS_WITH_BOTTOM_NAV = setOf(
     "home", "add_expense", "plan_list", "analytics_overview",
-    "guna_analytics", "spending_analytics", "savings_analytics",
+    "guna_analytics", "spending_analytics",
 )
 
 @Composable
@@ -101,7 +101,6 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
                 HomeScreen(
                     onAddExpense = { navController.navigate(Destination.AddExpense.build(null)) },
                     onEditExpense = { id -> navController.navigate(Destination.AddExpense.build(id)) },
-                    onOpenDeclaration = { navController.navigate(Destination.MonthlyDeclaration.build(DateUtil.currentCycleKey(monthStartDay))) },
                     onOpenAnalytics = { navController.navigate(Destination.AnalyticsOverview.route) },
                     onOpenPlan = { navController.navigate(Destination.PlanList.route) },
                     onOpenProfile = { navController.navigate(Destination.Profile.route) },

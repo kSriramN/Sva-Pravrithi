@@ -19,7 +19,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,7 +46,6 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     onAddExpense: () -> Unit,
     onEditExpense: (Long) -> Unit,
-    onOpenDeclaration: () -> Unit,
     onOpenAnalytics: () -> Unit,
     onOpenPlan: () -> Unit,
     onOpenProfile: () -> Unit,
@@ -66,9 +64,6 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            IconButton(onClick = onOpenDeclaration) {
-                Icon(Icons.Filled.Menu, contentDescription = "Menu")
-            }
             Text(
                 "Sva-Pravrithi",
                 style = MaterialTheme.typography.titleLarge,

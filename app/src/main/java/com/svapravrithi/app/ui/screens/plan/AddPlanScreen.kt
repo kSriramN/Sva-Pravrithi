@@ -1,5 +1,6 @@
 package com.svapravrithi.app.ui.screens.plan
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,20 +9,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,17 +43,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
+import com.svapravrithi.app.domain.model.ExpenseType
+import com.svapravrithi.app.domain.model.Guna
 import com.svapravrithi.app.domain.model.PlanPriority
 import com.svapravrithi.app.ui.components.CurrencyVisualTransformation
-import com.svapravrithi.app.ui.components.GunaSelector
+import com.svapravrithi.app.ui.components.FormFieldRow
 import com.svapravrithi.app.ui.components.PrimaryButton
-import com.svapravrithi.app.ui.components.TypeSelector
 import com.svapravrithi.app.ui.theme.LocalCurrency
+
+private enum class ActivePlanField { NONE, TYPE, GUNA, PRIORITY }
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -62,9 +71,9 @@ fun AddPlanScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val currency = LocalCurrency.current
+    var activeField by remember { mutableStateOf(ActivePlanField.NONE) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
-    val titleFocusRequester = remember { FocusRequester() }
     val amountFocusRequester = remember { FocusRequester() }
     LaunchedEffect(planId) { viewModel.load(planId) }
     LaunchedEffect(state.isLoaded) {
@@ -91,82 +100,143 @@ fun AddPlanScreen(
             )
         },
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(20.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            OutlinedTextField(
-                value = state.title,
-                onValueChange = viewModel::onTitleChange,
-                label = { Text("Title") },
-                modifier = Modifier.fillMaxWidth().focusRequester(titleFocusRequester),
-            )
-            OutlinedTextField(
-                value = state.estimatedAmount,
-                onValueChange = viewModel::onAmountChange,
-                label = { Text("Estimated Amount") },
-                leadingIcon = { Text(currency.symbol, style = MaterialTheme.typography.titleMedium) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                visualTransformation = CurrencyVisualTransformation(currency),
-                modifier = Modifier.fillMaxWidth().focusRequester(amountFocusRequester),
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { showDatePicker = true },
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+
+            // TOP HALF - every field lives here
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
             ) {
-                Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    "Due: ${state.dueDateLabel}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                FormFieldRow(label = "Title") {
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = state.title,
+                        onValueChange = viewModel::onTitleChange,
+                        textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
+                        singleLine = true,
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.widthIn(min = 60.dp),
+                    )
+                }
+
+                FormFieldRow(label = "Amount", contentArrangement = Arrangement.Start) {
+                    Text(currency.symbol, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = state.estimatedAmount,
+                        onValueChange = viewModel::onAmountChange,
+                        textStyle = TextStyle(textAlign = TextAlign.Start, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        visualTransformation = CurrencyVisualTransformation(currency),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.widthIn(min = 60.dp).focusRequester(amountFocusRequester),
+                    )
+                }
+
+                FormFieldRow(label = "Due Date", onClick = { showDatePicker = true }) {
+                    Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                    Text(state.dueDateLabel, style = MaterialTheme.typography.bodyLarge)
+                }
+
+                FormFieldRow(label = "Type", onClick = { activeField = if (activeField == ActivePlanField.TYPE) ActivePlanField.NONE else ActivePlanField.TYPE }) {
+                    Text(state.type?.label ?: "Select", style = MaterialTheme.typography.bodyLarge, color = if (state.type == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+
+                FormFieldRow(label = "Guna", onClick = { activeField = if (activeField == ActivePlanField.GUNA) ActivePlanField.NONE else ActivePlanField.GUNA }) {
+                    Text(state.guna?.label ?: "Select", style = MaterialTheme.typography.bodyLarge, color = if (state.guna == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+
+                FormFieldRow(label = "Priority", onClick = { activeField = if (activeField == ActivePlanField.PRIORITY) ActivePlanField.NONE else ActivePlanField.PRIORITY }) {
+                    Text(state.priority.label, style = MaterialTheme.typography.bodyLarge)
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+
+                FormFieldRow(label = "Notes") {
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = state.notes,
+                        onValueChange = viewModel::onNotesChange,
+                        textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
+                        singleLine = true,
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.widthIn(min = 60.dp),
+                    )
+                }
+
+                state.error?.let {
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                }
+
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
+                PrimaryButton(
+                    text = if (state.isEditing) "Update Plan" else "Save Plan",
+                    enabled = !state.isSaving && !state.isDeleting,
+                    onClick = { viewModel.save(onSaved) },
                 )
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Type", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
-                TypeSelector(selected = state.type, onSelect = viewModel::onTypeChange)
-            }
+            HorizontalDivider(thickness = 2.dp)
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Guna", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
-                GunaSelector(selected = state.guna, onSelect = viewModel::onGunaChange)
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Priority", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
-                androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PlanPriority.entries.forEach { p ->
-                        androidx.compose.material3.FilterChip(
-                            selected = state.priority == p,
-                            onClick = { viewModel.onPriorityChange(p) },
-                            label = { Text(p.label) },
+            // BOTTOM HALF - always-present selection panel, never a popup/sheet/dialog
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                when (activeField) {
+                    ActivePlanField.NONE -> {
+                        Text(
+                            "Tap Type, Guna, or Priority above to choose",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(20.dp),
                         )
+                    }
+                    ActivePlanField.TYPE -> {
+                        SelectionListHeader("Type")
+                        ExpenseType.entries.forEach { type ->
+                            SelectionListRow(
+                                label = type.label,
+                                selected = state.type == type,
+                                onClick = { viewModel.onTypeChange(type); activeField = ActivePlanField.NONE },
+                            )
+                        }
+                    }
+                    ActivePlanField.GUNA -> {
+                        SelectionListHeader("Guna")
+                        Guna.entries.forEach { guna ->
+                            SelectionListRow(
+                                label = guna.label,
+                                selected = state.guna == guna,
+                                onClick = { viewModel.onGunaChange(guna); activeField = ActivePlanField.NONE },
+                                accentColor = guna.color,
+                            )
+                        }
+                    }
+                    ActivePlanField.PRIORITY -> {
+                        SelectionListHeader("Priority")
+                        PlanPriority.entries.forEach { p ->
+                            SelectionListRow(
+                                label = p.label,
+                                selected = state.priority == p,
+                                onClick = { viewModel.onPriorityChange(p); activeField = ActivePlanField.NONE },
+                            )
+                        }
                     }
                 }
             }
-
-            OutlinedTextField(
-                value = state.notes,
-                onValueChange = viewModel::onNotesChange,
-                label = { Text("Notes") },
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            state.error?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-            }
-
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
-            PrimaryButton(
-                text = if (state.isEditing) "Update Plan" else "Save Plan",
-                enabled = !state.isSaving && !state.isDeleting,
-                onClick = { viewModel.save(onSaved) },
-            )
         }
     }
 
@@ -201,5 +271,44 @@ fun AddPlanScreen(
                 TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
             },
         )
+    }
+}
+
+@Composable
+private fun SelectionListHeader(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+    )
+}
+
+@Composable
+private fun SelectionListRow(label: String, selected: Boolean, onClick: () -> Unit, accentColor: androidx.compose.ui.graphics.Color? = null) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (accentColor != null) {
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier.size(12.dp).background(accentColor, androidx.compose.foundation.shape.CircleShape),
+                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(10.dp))
+                }
+                Text(label, style = MaterialTheme.typography.bodyLarge, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+            }
+            if (selected) {
+                Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+            }
+        }
+        HorizontalDivider()
     }
 }

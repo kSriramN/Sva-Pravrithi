@@ -1,9 +1,11 @@
 package com.svapravrithi.app.ui.screens.addexpense
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
@@ -24,7 +27,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,14 +51,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.svapravrithi.app.domain.model.DateUtil
+import com.svapravrithi.app.domain.model.ExpenseType
+import com.svapravrithi.app.domain.model.Guna
 import com.svapravrithi.app.domain.model.PaymentMethod
 import com.svapravrithi.app.ui.components.CurrencyVisualTransformation
 import com.svapravrithi.app.ui.components.FormFieldRow
-import com.svapravrithi.app.ui.components.GunaSelector
 import com.svapravrithi.app.ui.components.PrimaryButton
-import com.svapravrithi.app.ui.components.SvaCard
-import com.svapravrithi.app.ui.components.TypeSelector
 import com.svapravrithi.app.ui.theme.LocalCurrency
+
+private enum class ActiveField { NONE, CATEGORY, ACCOUNT, TYPE, GUNA }
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -70,8 +73,7 @@ fun AddExpenseScreen(
     val state by viewModel.uiState.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val currency = LocalCurrency.current
-    var categoryMenuExpanded by remember { mutableStateOf(false) }
-    var showPaymentMethodSheet by remember { mutableStateOf(false) }
+    var activeField by remember { mutableStateOf(ActiveField.NONE) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     val amountFocusRequester = remember { FocusRequester() }
@@ -101,160 +103,165 @@ fun AddExpenseScreen(
             )
         },
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 20.dp, vertical = 12.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            SvaCard {
-                Column {
-                    // Date - restyled as a flat list row matching the reference layout
-                    FormFieldRow(label = "Date", onClick = { showDatePicker = true }) {
-                        Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
-                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
-                        Text(state.dateLabel, style = MaterialTheme.typography.bodyLarge)
-                    }
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
 
-                    // Payment Method / Account - opens a bottom sheet picker (Cash / Card / Account)
-                    FormFieldRow(label = "Account", onClick = { showPaymentMethodSheet = true }) {
-                        Text(
-                            state.paymentMethod?.label ?: "Select",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (state.paymentMethod == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                        )
-                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
-                        Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-
-                    // Category - now a bottom sheet picker (Cash/Account style), matching the reference
-                    FormFieldRow(label = "Category", onClick = { categoryMenuExpanded = true }) {
-                        Text(state.category.ifBlank { "Select" }, style = MaterialTheme.typography.bodyLarge)
-                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
-                        Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-
-                    // Amount - flat, right-aligned, sized to its own content (not stretched full-width),
-                    // live comma formatting, auto-focused
-                    FormFieldRow(label = "Amount") {
-                        Text(currency.symbol, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
-                        androidx.compose.foundation.text.BasicTextField(
-                            value = state.amount,
-                            onValueChange = viewModel::onAmountChange,
-                            textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            visualTransformation = CurrencyVisualTransformation(currency),
-                            cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
-                            modifier = Modifier.widthIn(min = 60.dp).focusRequester(amountFocusRequester),
-                        )
-                    }
-
-                    // Note - same compact, content-sized style as Amount
-                    FormFieldRow(label = "Note") {
-                        androidx.compose.foundation.text.BasicTextField(
-                            value = state.comments,
-                            onValueChange = viewModel::onCommentsChange,
-                            textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
-                            singleLine = true,
-                            cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
-                            modifier = Modifier.widthIn(min = 60.dp),
-                        )
-                    }
+            // TOP HALF - every field lives here, nothing below this pane ever grows past it
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+            ) {
+                FormFieldRow(label = "Date", onClick = { showDatePicker = true }) {
+                    Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                    Text(state.dateLabel, style = MaterialTheme.typography.bodyLarge)
                 }
-            }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Type", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
-                TypeSelector(selected = state.type, onSelect = viewModel::onTypeChange)
-            }
+                FormFieldRow(label = "Account", onClick = { activeField = if (activeField == ActiveField.ACCOUNT) ActiveField.NONE else ActiveField.ACCOUNT }) {
+                    Text(
+                        state.paymentMethod?.label ?: "Select",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (state.paymentMethod == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Guna (Optional)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
-                Text(
-                    "For your own reflection \u2014 doesn't affect your monthly Guna score",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                FormFieldRow(label = "Category", onClick = { activeField = if (activeField == ActiveField.CATEGORY) ActiveField.NONE else ActiveField.CATEGORY }) {
+                    Text(state.category.ifBlank { "Select" }, style = MaterialTheme.typography.bodyLarge)
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+
+                FormFieldRow(label = "Amount", contentArrangement = Arrangement.Start) {
+                    Text(currency.symbol, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = state.amount,
+                        onValueChange = viewModel::onAmountChange,
+                        textStyle = TextStyle(textAlign = TextAlign.Start, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        visualTransformation = CurrencyVisualTransformation(currency),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.widthIn(min = 60.dp).focusRequester(amountFocusRequester),
+                    )
+                }
+
+                FormFieldRow(label = "Note") {
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = state.comments,
+                        onValueChange = viewModel::onCommentsChange,
+                        textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
+                        singleLine = true,
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.widthIn(min = 60.dp),
+                    )
+                }
+
+                FormFieldRow(label = "Type", onClick = { activeField = if (activeField == ActiveField.TYPE) ActiveField.NONE else ActiveField.TYPE }) {
+                    Text(state.type?.label ?: "Select", style = MaterialTheme.typography.bodyLarge, color = if (state.type == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+
+                FormFieldRow(label = "Guna", onClick = { activeField = if (activeField == ActiveField.GUNA) ActiveField.NONE else ActiveField.GUNA }) {
+                    Text(state.guna?.label ?: "Optional", style = MaterialTheme.typography.bodyLarge, color = if (state.guna == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+
+                state.error?.let {
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                }
+
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
+                PrimaryButton(
+                    text = if (state.isEditing) "Update Expense" else "Save Expense",
+                    enabled = !state.isSaving && !state.isDeleting,
+                    onClick = { viewModel.save(onSaved) },
                 )
-                GunaSelector(selected = state.guna, onSelect = viewModel::onGunaChange)
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
             }
 
-            state.error?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-            }
+            HorizontalDivider(thickness = 2.dp)
 
-            PrimaryButton(
-                text = if (state.isEditing) "Update Expense" else "Save Expense",
-                enabled = !state.isSaving && !state.isDeleting,
-                onClick = { viewModel.save(onSaved) },
-            )
-
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
-        }
-    }
-
-    if (categoryMenuExpanded) {
-        ModalBottomSheet(onDismissRequest = { categoryMenuExpanded = false }) {
-            Text(
-                "Category",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-            )
-            categories.forEach { category ->
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                viewModel.onCategoryChange(category)
-                                categoryMenuExpanded = false
-                            }
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(category, style = MaterialTheme.typography.bodyLarge)
-                        Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            // BOTTOM HALF - always-present selection panel, never a popup/sheet/dialog.
+            // Shows the options for whichever field above was last tapped.
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                when (activeField) {
+                    ActiveField.NONE -> {
+                        Text(
+                            "Tap Account, Category, Type, or Guna above to choose",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(20.dp),
+                        )
                     }
-                    HorizontalDivider()
+                    ActiveField.ACCOUNT -> {
+                        SelectionListHeader("Account")
+                        PaymentMethod.entries.forEach { method ->
+                            SelectionListRow(
+                                label = method.label,
+                                selected = state.paymentMethod == method,
+                                onClick = {
+                                    viewModel.onPaymentMethodChange(method)
+                                    activeField = ActiveField.NONE
+                                },
+                            )
+                        }
+                    }
+                    ActiveField.CATEGORY -> {
+                        SelectionListHeader("Category")
+                        categories.forEach { category ->
+                            SelectionListRow(
+                                label = category,
+                                selected = state.category == category,
+                                onClick = {
+                                    viewModel.onCategoryChange(category)
+                                    activeField = ActiveField.NONE
+                                },
+                            )
+                        }
+                    }
+                    ActiveField.TYPE -> {
+                        SelectionListHeader("Type")
+                        ExpenseType.entries.forEach { type ->
+                            SelectionListRow(
+                                label = type.label,
+                                selected = state.type == type,
+                                onClick = {
+                                    viewModel.onTypeChange(type)
+                                    activeField = ActiveField.NONE
+                                },
+                            )
+                        }
+                    }
+                    ActiveField.GUNA -> {
+                        SelectionListHeader("Guna (optional \u2014 for your own reflection, doesn't affect your score)")
+                        Guna.entries.forEach { guna ->
+                            SelectionListRow(
+                                label = guna.label,
+                                selected = state.guna == guna,
+                                onClick = {
+                                    viewModel.onGunaChange(guna)
+                                    activeField = ActiveField.NONE
+                                },
+                                accentColor = guna.color,
+                            )
+                        }
+                    }
                 }
             }
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(20.dp))
-        }
-    }
-
-    if (showPaymentMethodSheet) {
-        ModalBottomSheet(onDismissRequest = { showPaymentMethodSheet = false }) {
-            Text(
-                "Account",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-            )
-            PaymentMethod.entries.forEach { method ->
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                viewModel.onPaymentMethodChange(method)
-                                showPaymentMethodSheet = false
-                            }
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(method.label, style = MaterialTheme.typography.bodyLarge)
-                        Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    HorizontalDivider()
-                }
-            }
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(20.dp))
         }
     }
 
@@ -289,5 +296,44 @@ fun AddExpenseScreen(
                 TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
             },
         )
+    }
+}
+
+@Composable
+private fun SelectionListHeader(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+    )
+}
+
+@Composable
+private fun SelectionListRow(label: String, selected: Boolean, onClick: () -> Unit, accentColor: androidx.compose.ui.graphics.Color? = null) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (accentColor != null) {
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier.size(12.dp).background(accentColor, androidx.compose.foundation.shape.CircleShape),
+                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(10.dp))
+                }
+                Text(label, style = MaterialTheme.typography.bodyLarge, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+            }
+            if (selected) {
+                Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+            }
+        }
+        HorizontalDivider()
     }
 }

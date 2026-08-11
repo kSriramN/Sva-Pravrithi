@@ -28,6 +28,7 @@ fun FormFieldRow(
     label: String,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    contentArrangement: Arrangement.Horizontal = Arrangement.End,
     content: @Composable RowScope.() -> Unit,
 ) {
     Column(modifier = modifier.fillMaxWidth().let { if (onClick != null) it.clickable(onClick = onClick) else it }) {
@@ -43,7 +44,7 @@ fun FormFieldRow(
             )
             Row(
                 modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = contentArrangement,
                 verticalAlignment = Alignment.CenterVertically,
                 content = content,
             )
