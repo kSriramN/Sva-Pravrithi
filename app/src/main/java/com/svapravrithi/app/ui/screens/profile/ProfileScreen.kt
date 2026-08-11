@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.CalendarViewMonth
@@ -43,11 +44,12 @@ import com.svapravrithi.app.ui.components.SvaCard
 
 private data class SettingsRow(val icon: ImageVector, val label: String, val action: ProfileAction)
 
-private enum class ProfileAction { MONTHLY_DECLARATIONS, UPDATE_SAVINGS, CATEGORIES, SCORING_SETTINGS, CURRENCY, MONTH_START_DAY, BACKUP_RESTORE, HELP_SUPPORT, ABOUT }
+private enum class ProfileAction { MONTHLY_DECLARATIONS, UPDATE_SAVINGS, ANALYTICS, CATEGORIES, SCORING_SETTINGS, CURRENCY, MONTH_START_DAY, BACKUP_RESTORE, HELP_SUPPORT, ABOUT }
 
 private val settingsRows = listOf(
     SettingsRow(Icons.Filled.CalendarViewMonth, "Monthly Declarations", ProfileAction.MONTHLY_DECLARATIONS),
     SettingsRow(Icons.Filled.Savings, "Update Savings", ProfileAction.UPDATE_SAVINGS),
+    SettingsRow(Icons.AutoMirrored.Filled.ShowChart, "Analytics", ProfileAction.ANALYTICS),
     SettingsRow(Icons.Filled.Category, "Categories", ProfileAction.CATEGORIES),
     SettingsRow(Icons.Filled.Settings, "Scoring Settings", ProfileAction.SCORING_SETTINGS),
     SettingsRow(Icons.Filled.AttachMoney, "Currency", ProfileAction.CURRENCY),
@@ -62,6 +64,7 @@ fun ProfileScreen(
     onBack: () -> Unit,
     onMonthlyDeclarations: () -> Unit,
     onUpdateSavings: () -> Unit,
+    onOpenAnalytics: () -> Unit,
     onCategories: () -> Unit,
     onScoringSettings: () -> Unit,
     onBackupRestore: () -> Unit,
@@ -111,6 +114,7 @@ fun ProfileScreen(
                                 when (row.action) {
                                     ProfileAction.MONTHLY_DECLARATIONS -> onMonthlyDeclarations()
                                     ProfileAction.UPDATE_SAVINGS -> onUpdateSavings()
+                                    ProfileAction.ANALYTICS -> onOpenAnalytics()
                                     ProfileAction.CATEGORIES -> onCategories()
                                     ProfileAction.SCORING_SETTINGS -> onScoringSettings()
                                     ProfileAction.CURRENCY -> onCurrency()

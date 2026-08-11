@@ -19,6 +19,7 @@ sealed class Destination(val route: String) {
     data object SpendingAnalytics : Destination("spending_analytics")
     data object SavingsAnalytics : Destination("savings_analytics")
     data object MonthlyReflection : Destination("monthly_reflection")
+    data object Transactions : Destination("transactions")
     data object Profile : Destination("profile")
     data object UpdateSavings : Destination("update_savings")
     data object Backup : Destination("backup")
@@ -35,5 +36,5 @@ enum class BottomNavItem(val destination: Destination, val label: String) {
     HOME(Destination.Home, "Home"),
     ADD(Destination.AddExpense, "Add"),
     PLAN(Destination.PlanList, "Plan"),
-    ANALYTICS(Destination.AnalyticsOverview, "Analytics"),
+    TRANSACTIONS(Destination.Transactions, "Trans."),
 }

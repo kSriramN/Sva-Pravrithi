@@ -26,6 +26,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -58,7 +59,7 @@ import com.svapravrithi.app.ui.components.FormFieldRow
 import com.svapravrithi.app.ui.components.PrimaryButton
 import com.svapravrithi.app.ui.theme.LocalCurrency
 
-private enum class ActivePlanField { NONE, TYPE, GUNA, PRIORITY }
+private enum class ActivePlanSheet { NONE, TYPE, GUNA, PRIORITY }
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +72,7 @@ fun AddPlanScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val currency = LocalCurrency.current
-    var activeField by remember { mutableStateOf(ActivePlanField.NONE) }
+    var activeSheet by remember { mutableStateOf(ActivePlanSheet.NONE) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     val amountFocusRequester = remember { FocusRequester() }
@@ -100,143 +101,126 @@ fun AddPlanScreen(
             )
         },
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-
-            // TOP HALF - every field lives here
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp),
-            ) {
-                FormFieldRow(label = "Title") {
-                    androidx.compose.foundation.text.BasicTextField(
-                        value = state.title,
-                        onValueChange = viewModel::onTitleChange,
-                        textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
-                        singleLine = true,
-                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
-                        modifier = Modifier.widthIn(min = 60.dp),
-                    )
-                }
-
-                FormFieldRow(label = "Amount", contentArrangement = Arrangement.Start) {
-                    Text(currency.symbol, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
-                    androidx.compose.foundation.text.BasicTextField(
-                        value = state.estimatedAmount,
-                        onValueChange = viewModel::onAmountChange,
-                        textStyle = TextStyle(textAlign = TextAlign.Start, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        visualTransformation = CurrencyVisualTransformation(currency),
-                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
-                        modifier = Modifier.widthIn(min = 60.dp).focusRequester(amountFocusRequester),
-                    )
-                }
-
-                FormFieldRow(label = "Due Date", onClick = { showDatePicker = true }) {
-                    Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
-                    Text(state.dueDateLabel, style = MaterialTheme.typography.bodyLarge)
-                }
-
-                FormFieldRow(label = "Type", onClick = { activeField = if (activeField == ActivePlanField.TYPE) ActivePlanField.NONE else ActivePlanField.TYPE }) {
-                    Text(state.type?.label ?: "Select", style = MaterialTheme.typography.bodyLarge, color = if (state.type == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
-                    Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-
-                FormFieldRow(label = "Guna", onClick = { activeField = if (activeField == ActivePlanField.GUNA) ActivePlanField.NONE else ActivePlanField.GUNA }) {
-                    Text(state.guna?.label ?: "Select", style = MaterialTheme.typography.bodyLarge, color = if (state.guna == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
-                    Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-
-                FormFieldRow(label = "Priority", onClick = { activeField = if (activeField == ActivePlanField.PRIORITY) ActivePlanField.NONE else ActivePlanField.PRIORITY }) {
-                    Text(state.priority.label, style = MaterialTheme.typography.bodyLarge)
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
-                    Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-
-                FormFieldRow(label = "Notes") {
-                    androidx.compose.foundation.text.BasicTextField(
-                        value = state.notes,
-                        onValueChange = viewModel::onNotesChange,
-                        textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
-                        singleLine = true,
-                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
-                        modifier = Modifier.widthIn(min = 60.dp),
-                    )
-                }
-
-                state.error?.let {
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
-                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-                }
-
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
-                PrimaryButton(
-                    text = if (state.isEditing) "Update Plan" else "Save Plan",
-                    enabled = !state.isSaving && !state.isDeleting,
-                    onClick = { viewModel.save(onSaved) },
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
+        ) {
+            FormFieldRow(label = "Title") {
+                androidx.compose.foundation.text.BasicTextField(
+                    value = state.title,
+                    onValueChange = viewModel::onTitleChange,
+                    textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
+                    singleLine = true,
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.widthIn(min = 60.dp),
                 )
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
             }
 
-            HorizontalDivider(thickness = 2.dp)
+            FormFieldRow(label = "Amount", contentArrangement = Arrangement.Start) {
+                Text(currency.symbol, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
+                androidx.compose.foundation.text.BasicTextField(
+                    value = state.estimatedAmount,
+                    onValueChange = viewModel::onAmountChange,
+                    textStyle = TextStyle(textAlign = TextAlign.Start, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = CurrencyVisualTransformation(currency),
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.widthIn(min = 60.dp).focusRequester(amountFocusRequester),
+                )
+            }
 
-            // BOTTOM HALF - always-present selection panel, never a popup/sheet/dialog
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                when (activeField) {
-                    ActivePlanField.NONE -> {
-                        Text(
-                            "Tap Type, Guna, or Priority above to choose",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(20.dp),
+            FormFieldRow(label = "Due Date", onClick = { showDatePicker = true }) {
+                Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                Text(state.dueDateLabel, style = MaterialTheme.typography.bodyLarge)
+            }
+
+            FormFieldRow(label = "Type", onClick = { activeSheet = ActivePlanSheet.TYPE }) {
+                Text(state.type?.label ?: "Select", style = MaterialTheme.typography.bodyLarge, color = if (state.type == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            FormFieldRow(label = "Guna", onClick = { activeSheet = ActivePlanSheet.GUNA }) {
+                Text(state.guna?.label ?: "Select", style = MaterialTheme.typography.bodyLarge, color = if (state.guna == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            FormFieldRow(label = "Priority", onClick = { activeSheet = ActivePlanSheet.PRIORITY }) {
+                Text(state.priority.label, style = MaterialTheme.typography.bodyLarge)
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            FormFieldRow(label = "Notes") {
+                androidx.compose.foundation.text.BasicTextField(
+                    value = state.notes,
+                    onValueChange = viewModel::onNotesChange,
+                    textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
+                    singleLine = true,
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.widthIn(min = 60.dp),
+                )
+            }
+
+            state.error?.let {
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+            }
+
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
+            PrimaryButton(
+                text = if (state.isEditing) "Update Plan" else "Save Plan",
+                enabled = !state.isSaving && !state.isDeleting,
+                onClick = { viewModel.save(onSaved) },
+            )
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
+        }
+    }
+
+    if (activeSheet != ActivePlanSheet.NONE) {
+        ModalBottomSheet(onDismissRequest = { activeSheet = ActivePlanSheet.NONE }) {
+            when (activeSheet) {
+                ActivePlanSheet.TYPE -> {
+                    SheetHeader("Type")
+                    ExpenseType.entries.forEach { type ->
+                        SheetRow(
+                            label = type.label,
+                            selected = state.type == type,
+                            onClick = { viewModel.onTypeChange(type); activeSheet = ActivePlanSheet.NONE },
                         )
                     }
-                    ActivePlanField.TYPE -> {
-                        SelectionListHeader("Type")
-                        ExpenseType.entries.forEach { type ->
-                            SelectionListRow(
-                                label = type.label,
-                                selected = state.type == type,
-                                onClick = { viewModel.onTypeChange(type); activeField = ActivePlanField.NONE },
-                            )
-                        }
-                    }
-                    ActivePlanField.GUNA -> {
-                        SelectionListHeader("Guna")
-                        Guna.entries.forEach { guna ->
-                            SelectionListRow(
-                                label = guna.label,
-                                selected = state.guna == guna,
-                                onClick = { viewModel.onGunaChange(guna); activeField = ActivePlanField.NONE },
-                                accentColor = guna.color,
-                            )
-                        }
-                    }
-                    ActivePlanField.PRIORITY -> {
-                        SelectionListHeader("Priority")
-                        PlanPriority.entries.forEach { p ->
-                            SelectionListRow(
-                                label = p.label,
-                                selected = state.priority == p,
-                                onClick = { viewModel.onPriorityChange(p); activeField = ActivePlanField.NONE },
-                            )
-                        }
+                }
+                ActivePlanSheet.GUNA -> {
+                    SheetHeader("Guna")
+                    Guna.entries.forEach { guna ->
+                        SheetRow(
+                            label = guna.label,
+                            selected = state.guna == guna,
+                            onClick = { viewModel.onGunaChange(guna); activeSheet = ActivePlanSheet.NONE },
+                            accentColor = guna.color,
+                        )
                     }
                 }
+                ActivePlanSheet.PRIORITY -> {
+                    SheetHeader("Priority")
+                    PlanPriority.entries.forEach { p ->
+                        SheetRow(
+                            label = p.label,
+                            selected = state.priority == p,
+                            onClick = { viewModel.onPriorityChange(p); activeSheet = ActivePlanSheet.NONE },
+                        )
+                    }
+                }
+                ActivePlanSheet.NONE -> {}
             }
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(20.dp))
         }
     }
 
@@ -275,24 +259,23 @@ fun AddPlanScreen(
 }
 
 @Composable
-private fun SelectionListHeader(text: String) {
+private fun SheetHeader(text: String) {
     Text(
         text,
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.Medium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.SemiBold,
         modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
     )
 }
 
 @Composable
-private fun SelectionListRow(label: String, selected: Boolean, onClick: () -> Unit, accentColor: androidx.compose.ui.graphics.Color? = null) {
+private fun SheetRow(label: String, selected: Boolean, onClick: () -> Unit, accentColor: androidx.compose.ui.graphics.Color? = null) {
     Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
-                .padding(horizontal = 20.dp, vertical = 14.dp),
+                .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {

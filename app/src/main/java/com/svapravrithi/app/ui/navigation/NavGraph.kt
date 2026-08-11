@@ -36,10 +36,10 @@ import com.svapravrithi.app.ui.screens.settings.HelpSupportScreen
 import com.svapravrithi.app.ui.screens.settings.MonthStartDaySettingsScreen
 import com.svapravrithi.app.ui.screens.settings.ScoringSettingsScreen
 import com.svapravrithi.app.ui.screens.splash.SplashScreen
+import com.svapravrithi.app.ui.screens.transactions.TransactionsScreen
 
 private val SCREENS_WITH_BOTTOM_NAV = setOf(
-    "home", "add_expense", "plan_list", "analytics_overview",
-    "guna_analytics", "spending_analytics",
+    "home", "add_expense", "plan_list", "transactions",
 )
 
 @Composable
@@ -101,9 +101,13 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
                 HomeScreen(
                     onAddExpense = { navController.navigate(Destination.AddExpense.build(null)) },
                     onEditExpense = { id -> navController.navigate(Destination.AddExpense.build(id)) },
-                    onOpenAnalytics = { navController.navigate(Destination.AnalyticsOverview.route) },
                     onOpenPlan = { navController.navigate(Destination.PlanList.route) },
                     onOpenProfile = { navController.navigate(Destination.Profile.route) },
+                )
+            }
+            composable(Destination.Transactions.route) {
+                TransactionsScreen(
+                    onEditExpense = { id -> navController.navigate(Destination.AddExpense.build(id)) },
                 )
             }
             composable(
@@ -138,6 +142,7 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
             }
             composable(Destination.AnalyticsOverview.route) {
                 AnalyticsOverviewScreen(
+                    onBack = { navController.popBackStack() },
                     onOpenGuna = { navController.navigate(Destination.GunaAnalytics.route) },
                     onOpenSpending = { navController.navigate(Destination.SpendingAnalytics.route) },
                     onOpenReflection = { navController.navigate(Destination.MonthlyReflection.route) },
@@ -156,6 +161,7 @@ fun SvaNavGraph(navController: NavHostController = rememberNavController()) {
                     onBack = { navController.popBackStack() },
                     onMonthlyDeclarations = { navController.navigate(Destination.MonthlyDeclaration.build(DateUtil.currentCycleKey(monthStartDay))) },
                     onUpdateSavings = { navController.navigate(Destination.UpdateSavings.route) },
+                    onOpenAnalytics = { navController.navigate(Destination.AnalyticsOverview.route) },
                     onCategories = { navController.navigate(Destination.Categories.route) },
                     onScoringSettings = { navController.navigate(Destination.ScoringSettings.route) },
                     onBackupRestore = { navController.navigate(Destination.Backup.route) },

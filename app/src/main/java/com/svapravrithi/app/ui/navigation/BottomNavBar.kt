@@ -2,9 +2,9 @@ package com.svapravrithi.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -23,7 +23,7 @@ private fun iconFor(item: BottomNavItem): ImageVector = when (item) {
     BottomNavItem.HOME -> Icons.Filled.Home
     BottomNavItem.ADD -> Icons.Filled.Add
     BottomNavItem.PLAN -> Icons.Filled.CalendarMonth
-    BottomNavItem.ANALYTICS -> Icons.Filled.BarChart
+    BottomNavItem.TRANSACTIONS -> Icons.Filled.Receipt
 }
 
 @Composable

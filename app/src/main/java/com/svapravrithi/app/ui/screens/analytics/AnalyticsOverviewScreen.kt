@@ -12,13 +12,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,8 +37,10 @@ import com.svapravrithi.app.domain.model.DateUtil
 import com.svapravrithi.app.ui.components.SvaCard
 import com.svapravrithi.app.ui.theme.LocalMonthStartDay
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsOverviewScreen(
+    onBack: () -> Unit,
     onOpenGuna: () -> Unit,
     onOpenSpending: () -> Unit,
     onOpenReflection: () -> Unit,
@@ -42,14 +49,27 @@ fun AnalyticsOverviewScreen(
     val state by viewModel.uiState.collectAsState()
     val monthStartDay = LocalMonthStartDay.current
 
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Analytics") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+            )
+        },
+    ) { padding ->
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(padding)
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("Analytics", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
         Text(DateUtil.cycleLabel(state.yearMonth, monthStartDay), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         SvaCard {
@@ -101,6 +121,7 @@ fun AnalyticsOverviewScreen(
         AnalyticsLink(icon = Icons.Filled.SelfImprovement, title = "Guna Analytics", subtitle = "Sattvik / Rajasik / Tamasik distribution", onClick = onOpenGuna)
         AnalyticsLink(icon = Icons.Filled.PieChart, title = "Spending Analytics", subtitle = "Needs, Wants & Pleasures breakdown", onClick = onOpenSpending)
         AnalyticsLink(icon = Icons.Filled.BarChart, title = "Monthly Reflection", subtitle = "Full breakdown & insight", onClick = onOpenReflection)
+    }
     }
 }
 

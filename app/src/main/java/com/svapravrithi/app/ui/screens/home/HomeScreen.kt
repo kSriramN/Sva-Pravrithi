@@ -46,7 +46,6 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     onAddExpense: () -> Unit,
     onEditExpense: (Long) -> Unit,
-    onOpenAnalytics: () -> Unit,
     onOpenPlan: () -> Unit,
     onOpenProfile: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
