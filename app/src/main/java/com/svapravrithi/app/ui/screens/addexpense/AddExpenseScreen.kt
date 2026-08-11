@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -19,8 +20,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,8 +28,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
@@ -45,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -133,57 +129,39 @@ fun AddExpenseScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
 
-                    // Category - same dropdown menu as before, triggered from a flat row instead of a boxed field
-                    androidx.compose.foundation.layout.Box {
-                        FormFieldRow(label = "Category", onClick = { categoryMenuExpanded = true }) {
-                            Text(state.category.ifBlank { "Select" }, style = MaterialTheme.typography.bodyLarge)
-                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
-                            Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        DropdownMenu(expanded = categoryMenuExpanded, onDismissRequest = { categoryMenuExpanded = false }) {
-                            categories.forEach { category ->
-                                DropdownMenuItem(
-                                    text = { Text(category) },
-                                    onClick = { viewModel.onCategoryChange(category); categoryMenuExpanded = false },
-                                )
-                            }
-                        }
+                    // Category - now a bottom sheet picker (Cash/Account style), matching the reference
+                    FormFieldRow(label = "Category", onClick = { categoryMenuExpanded = true }) {
+                        Text(state.category.ifBlank { "Select" }, style = MaterialTheme.typography.bodyLarge)
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(6.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
 
-                    // Amount - flat, underlined, right-aligned, live comma formatting, auto-focused
+                    // Amount - flat, right-aligned, sized to its own content (not stretched full-width),
+                    // live comma formatting, auto-focused
                     FormFieldRow(label = "Amount") {
                         Text(currency.symbol, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        TextField(
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
+                        androidx.compose.foundation.text.BasicTextField(
                             value = state.amount,
                             onValueChange = viewModel::onAmountChange,
-                            textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize),
+                            textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             visualTransformation = CurrencyVisualTransformation(currency),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                            ),
-                            modifier = Modifier.weight(1f).focusRequester(amountFocusRequester),
+                            cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                            modifier = Modifier.widthIn(min = 60.dp).focusRequester(amountFocusRequester),
                         )
                     }
 
-                    // Note - flat, matching Money Manager's "Note" field
+                    // Note - same compact, content-sized style as Amount
                     FormFieldRow(label = "Note") {
-                        TextField(
+                        androidx.compose.foundation.text.BasicTextField(
                             value = state.comments,
                             onValueChange = viewModel::onCommentsChange,
-                            textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize),
+                            textStyle = TextStyle(textAlign = TextAlign.End, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
                             singleLine = true,
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                            ),
-                            modifier = Modifier.weight(1f),
+                            cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                            modifier = Modifier.widthIn(min = 60.dp),
                         )
                     }
                 }
@@ -215,6 +193,37 @@ fun AddExpenseScreen(
             )
 
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
+        }
+    }
+
+    if (categoryMenuExpanded) {
+        ModalBottomSheet(onDismissRequest = { categoryMenuExpanded = false }) {
+            Text(
+                "Category",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+            )
+            categories.forEach { category ->
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                viewModel.onCategoryChange(category)
+                                categoryMenuExpanded = false
+                            }
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(category, style = MaterialTheme.typography.bodyLarge)
+                        Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    HorizontalDivider()
+                }
+            }
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(20.dp))
         }
     }
 
