@@ -28,7 +28,7 @@ fun FormFieldRow(
     label: String,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    contentArrangement: Arrangement.Horizontal = Arrangement.End,
+    contentArrangement: Arrangement.Horizontal = Arrangement.Start,
     content: @Composable RowScope.() -> Unit,
 ) {
     Column(modifier = modifier.fillMaxWidth().let { if (onClick != null) it.clickable(onClick = onClick) else it }) {

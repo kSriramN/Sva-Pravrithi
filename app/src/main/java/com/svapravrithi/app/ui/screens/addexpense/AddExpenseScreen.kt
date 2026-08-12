@@ -56,7 +56,6 @@ import com.svapravrithi.app.domain.model.Guna
 import com.svapravrithi.app.domain.model.PaymentMethod
 import com.svapravrithi.app.ui.components.CurrencyVisualTransformation
 import com.svapravrithi.app.ui.components.FormFieldRow
-import com.svapravrithi.app.ui.components.PrimaryButton
 import com.svapravrithi.app.ui.theme.LocalCurrency
 
 private enum class ActiveSheet { NONE, CATEGORY, ACCOUNT, TYPE, GUNA }
@@ -98,6 +97,12 @@ fun AddExpenseScreen(
                             Icon(Icons.Filled.Delete, contentDescription = "Delete expense")
                         }
                     }
+                    androidx.compose.material3.TextButton(
+                        onClick = { viewModel.save(onSaved) },
+                        enabled = !state.isSaving && !state.isDeleting,
+                    ) {
+                        Text("Save", fontWeight = FontWeight.SemiBold)
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
@@ -133,16 +138,16 @@ fun AddExpenseScreen(
             }
 
             FormFieldRow(label = "Amount", contentArrangement = Arrangement.Start) {
-                Text(currency.symbol, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(currency.symbol, style = MaterialTheme.typography.bodyLarge, color = com.svapravrithi.app.ui.theme.Tamasik)
                 androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
                 androidx.compose.foundation.text.BasicTextField(
                     value = state.amount,
                     onValueChange = viewModel::onAmountChange,
-                    textStyle = TextStyle(textAlign = TextAlign.Start, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = MaterialTheme.colorScheme.onSurface),
+                    textStyle = TextStyle(textAlign = TextAlign.Start, fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = com.svapravrithi.app.ui.theme.Tamasik, fontWeight = FontWeight.Medium),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     visualTransformation = CurrencyVisualTransformation(currency),
-                    cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(com.svapravrithi.app.ui.theme.Tamasik),
                     modifier = Modifier.widthIn(min = 60.dp).focusRequester(amountFocusRequester),
                 )
             }
@@ -175,12 +180,6 @@ fun AddExpenseScreen(
                 Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
 
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
-            PrimaryButton(
-                text = if (state.isEditing) "Update Expense" else "Save Expense",
-                enabled = !state.isSaving && !state.isDeleting,
-                onClick = { viewModel.save(onSaved) },
-            )
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
         }
     }

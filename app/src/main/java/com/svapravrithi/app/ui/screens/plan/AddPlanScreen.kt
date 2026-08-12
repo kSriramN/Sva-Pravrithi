@@ -56,7 +56,6 @@ import com.svapravrithi.app.domain.model.Guna
 import com.svapravrithi.app.domain.model.PlanPriority
 import com.svapravrithi.app.ui.components.CurrencyVisualTransformation
 import com.svapravrithi.app.ui.components.FormFieldRow
-import com.svapravrithi.app.ui.components.PrimaryButton
 import com.svapravrithi.app.ui.theme.LocalCurrency
 
 private enum class ActivePlanSheet { NONE, TYPE, GUNA, PRIORITY }
@@ -95,6 +94,12 @@ fun AddPlanScreen(
                         IconButton(onClick = { showDeleteConfirm = true }) {
                             Icon(Icons.Filled.Delete, contentDescription = "Delete plan")
                         }
+                    }
+                    androidx.compose.material3.TextButton(
+                        onClick = { viewModel.save(onSaved) },
+                        enabled = !state.isSaving && !state.isDeleting,
+                    ) {
+                        Text("Save", fontWeight = FontWeight.SemiBold)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
@@ -174,12 +179,6 @@ fun AddPlanScreen(
                 Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
 
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
-            PrimaryButton(
-                text = if (state.isEditing) "Update Plan" else "Save Plan",
-                enabled = !state.isSaving && !state.isDeleting,
-                onClick = { viewModel.save(onSaved) },
-            )
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
         }
     }
